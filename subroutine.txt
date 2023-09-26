@@ -1,0 +1,110 @@
+##############################
+# G Uni explains subroutines #
+##############################
+
+# Given the following code:
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use feature 'say';
+
+sub message {
+    my %args = (
+        name => undef,
+        @_
+    );
+    return $args{name} ? "Hello $args{name}" : "Hello world";
+}
+say message({ name => 'Andrew' });
+say message( name => 'Fred' );
+
+# Why does it output:
+
+# Odd number of elements in hash assignment at /Users/andrew/tmp/hello.pl line 8.
+# Hello world
+# Hello Fred
+
+# rather than
+
+# Hello Andrew
+# Hello Fred 
+
+##########
+# answer #
+##########
+# to understand what's going on
+# first print out { name => 'Andrew' } - and I don't mean print a Data::Dump::pp({ name => 'Andrew' })
+# I mean just:
+
+# say  { name => 'Andrew' };
+ 
+# produces - HASH(0x7f944c00aa80)
+
+# Roughly speaking, it's just printing out the memory address
+# where the hash ( name => 'Andrew' ) resides during execution of this code
+
+# If we return to the subroutine above, calling it with
+ 
+# say message({ name => 'Andrew' });
+
+# we can extrapolate the first statement to:
+
+    my %args = (
+        name => undef,
+        { name => 'Andrew' }
+    );
+
+# which the Perl interpreter sees as (roughly - this code won't run)
+
+#    my %args = (
+#        name => undef,
+#        HASH(0x7f944c00aa80)
+#    );
+
+# and noting that "=>" makes the argument on the left into a string:
+
+# my %args = ("name", undef, HASH(0x7f944c00aa80));
+
+# and hence the complaint: 
+
+# Odd number of elements in hash assignment at /Users/andrew/tmp/hello.pl line 8.
+
+# If you had instead (just as an experiment) written:
+
+#    my %args = (
+#        name => undef,
+#        %{$ARGV[0]}
+#    );
+ 
+# with the % in front of the hashref to expand it into the actual hash) this would have been interpreted as:
+
+#    my %args = (
+#        name => undef,
+#        ("name", "Andrew"),
+#    )
+
+# and because parentheses all flatten out within lists, this is equivalent to
+
+#  my %args = (
+#  name => undef,
+#  name => "Andrew",
+#   )
+
+# or simply
+
+# my %args = (
+#  name => "Andrew",
+# )
+
+# since the last one wins, and the output is what you'd expect.
+# Of course, if you call the same subroutine with
+
+# say message( name => 'Fred' );
+
+# then $ARGV[0] would be "name" rather than HASH(0x7f944c00aa80)
+# and attempting to dereference it would cause the script to die with
+
+# Can't use an undefined value as a HASH reference at /Users/andrew/tmp/hello.pl line 10
+
+# (which is confusing because it is defined, and it's "name")
