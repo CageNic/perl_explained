@@ -1,0 +1,120 @@
+
+Creating a simple web interface with a search feature for an SQLite database using Perl and Dancer can be accomplished with the following steps. Make sure you have Dancer installed on your system:
+
+bash
+Copy code
+cpan Dancer
+Now, let's create a simple Dancer web application. Below is a basic example with a search form and displaying results:
+
+Create the Dancer App:
+
+Create a file named app.pl:
+
+perl
+Copy code
+# app.pl
+
+use Dancer;
+
+set 'template' => 'template_toolkit';
+
+get '/' => sub {
+    template 'index';
+};
+
+post '/search' => sub {
+    my $search_term = params->{'search_term'};
+    my $results     = search_database($search_term);
+    template 'results', { results => $results, search_term => $search_term };
+};
+
+sub search_database {
+    my ($search_term) = @_;
+
+    # Perform SQLite database search here
+    # Replace the following line with your SQLite database query
+    my $results = ["Result 1", "Result 2", "Result 3"];
+
+    return $results;
+}
+
+start;
+Create the Templates:
+
+Create a folder named views and within it, create two files: index.tt and results.tt.
+
+views/index.tt:
+
+html
+Copy code
+<!-- views/index.tt -->
+
+<html>
+<head>
+    <title>SQLite Search</title>
+</head>
+<body>
+    <h1>SQLite Database Search</h1>
+    <form action="/search" method="post">
+        <label for="search_term">Search Term:</label>
+        <input type="text" name="search_term" required>
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html>
+views/results.tt:
+
+html
+Copy code
+<!-- views/results.tt -->
+
+<html>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results for "<%= $search_term %>"</h1>
+    <ul>
+        % foreach my $result (@$results) {
+            <li><%= $result %></li>
+        % }
+    </ul>
+</body>
+</html>
+Run the Dancer App:
+
+Save all the files, and in the terminal, run:
+
+bash
+Copy code
+perl app.pl
+Open a web browser and navigate to http://localhost:3000. You should see the search form.
+
+SQLite Database Integration:
+
+Integrate your SQLite database with the search_database subroutine in app.pl. Use the DBI module to connect and execute queries.
+
+perl
+Copy code
+# Modify the search_database subroutine in app.pl
+
+use DBI;
+
+sub search_database {
+    my ($search_term) = @_;
+
+    my $dbh = DBI->connect("dbi:SQLite:dbname=your_database.db", "", "", { RaiseError => 1 });
+
+    my $results = $dbh->selectcol_arrayref(
+        "SELECT your_column FROM your_table WHERE your_column LIKE ?",
+        undef,
+        "%$search_term%"
+    );
+
+    $dbh->disconnect;
+
+    return $results;
+}
+Replace placeholders like your_database.db, your_table, and your_column with your actual database information.
+
+This example provides a basic structure for a Dancer web application with a search feature connected to an SQLite database. Customize it according to your specific requirements and database structure.
