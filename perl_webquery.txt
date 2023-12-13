@@ -1,0 +1,2 @@
+
+To download images along with their descriptions from a webpage using the Web::Query module in Perl
