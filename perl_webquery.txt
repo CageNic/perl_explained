@@ -1,2 +1,46 @@
 
 To download images along with their descriptions from a webpage using the Web::Query module in Perl
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Web::Query;
+use LWP::UserAgent;
+
+# URL of the webpage containing images
+my $url = 'https://example.com';
+
+# Create a user agent
+my $ua = LWP::UserAgent->new;
+
+# Fetch the HTML content of the webpage
+my $response = $ua->get($url);
+
+unless ($response->is_success) {
+    die "Failed to fetch the webpage: " . $response->status_line;
+}
+
+my $html_content = $response->decoded_content;
+
+# Parse HTML content using Web::Query
+wq($html_content)
+    ->find('img') # Select all image tags
+    ->each(sub {
+        my $img_url = $_->attr('src');
+        my $img_desc = $_->attr('alt') || ''; # Get image description (alt text)
+        
+        print "Image URL: $img_url\n";
+        print "Description: $img_desc\n";
+        
+        # Download the image
+        my $img_response = $ua->get($img_url);
+        if ($img_response->is_success) {
+            my $filename = (split '/', $img_url)[-1];
+            open my $fh, '>', $filename or die "Cannot open file $filename: $!";
+            print $fh $img_response->decoded_content;
+            close $fh;
+            print "Image downloaded: $filename\n";
+        } else {
+            print "Failed to download image: " . $img_response->status_line . "\n";
+        }
+    });
