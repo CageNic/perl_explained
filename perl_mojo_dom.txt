@@ -1,0 +1,52 @@
+use v5.10;
+use Mojo::DOM;
+
+my $html = do { local $/; <DATA> };
+
+my @values = Mojo::DOM->new( $html )
+    ->find( 'td.reply span.postertrip' )
+    ->map( 'all_text' )
+    ->each;
+
+say join "\n", @values;
+
+__DATA__
+<table>
+   <tbody>
+      <tr>
+         <td class="doubledash">&gt;&gt;</td>
+         <td class="reply" id="reply2">
+            <a name="2"></a> <label><input type="checkbox" name="delete" value="1199313466,2" /> <span class="replytitle"></span> <span class="commentpostername"><a href="test">Test1</a></span><span class="postertrip"><a href="test">!AAAAAAAA</a></span>  08/01/03(Thu)02:06</label> <span class="reflink"> <a href="test">No.2</a> </span>&nbsp;  <br /> <span class="filesize">File: <a target="_blank" href="test">1199326003295.jpg</a> -(<em>65843 B, 288x412</em>)</span> <span class="thumbnailmsg">Thumbnail displayed, click image for full size.</span><br />  <a target="_blank" test"> <img src="test" width="139" height="200" alt="65843" class="thumb" /></a>    
+            <blockquote>
+               <p>Test message 1</p>
+            </blockquote>
+         </td>
+      </tr>
+   </tbody>
+</table>
+<table>
+   <tbody>
+      <tr>
+         <td class="doubledash">&gt;&gt;</td>
+         <td class="reply" id="reply5">
+            <a name="5"></a> <label><input type="checkbox" name="delete" value="1199313466,5" /> <span class="replytitle"></span>  <span class="commentpostername">Test2</span><span class="postertrip">!BBBBBBBB</span> 08/01/03(Thu)16:12</label> <span class="reflink"> <a href="test">No.5</a> </span>&nbsp;  
+            <blockquote>
+               <p>Test message 2</p>
+            </blockquote>
+         </td>
+      </tr>
+   </tbody>
+</table>
+<table>
+   <tbody>
+      <tr>
+         <td class="doubledash">&gt;&gt;</td>
+         <td class="reply" id="reply7">
+            <a name="7"></a> <label><input type="checkbox" name="delete" value="1199161229,7" /> <span class="replytitle"></span>  <span class="commentpostername">Test3</span><span class="postertrip">!CCCCCCCC.</span> 08/01/01(Tue)17:53</label> <span class="reflink"> <a href="test">No.7</a> </span>&nbsp;  
+            <blockquote>
+               <p>Test message 3</p>
+            </blockquote>
+         </td>
+      </tr>
+   </tbody>
+</table>
