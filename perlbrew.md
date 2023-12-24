@@ -20,8 +20,10 @@ If they’re installed, you’ll see the following output:
 libgcc-4.8.5-11.el7.x86_64
 gcc-4.8.5-11.el7.x86_64  
 
-You also need the bzip2-libs and bzip2 packages. Check to see that they’re installed as well:
-### rpm -qa | grep bzip2
+You also need the bzip2-libs and bzip2 packages. Check to see that they’re installed as well:  
+```bash
+rpm -qa | grep bzip2
+```
 
 If they’re both installed, you’ll see the following:
 
@@ -29,19 +31,21 @@ bzip2-libs-1.0.6-13.el7.x86_64
 Bzip2-1.0.6-13.el7.x86_64  
 
 With the prerequisites out of the way, you can install Perlbrew. Download the installation script to your server:
-
-### curl -L https://install.perlbrew.pl -o install.perlbrew.pl
+```bash
+curl -L https://install.perlbrew.pl -o install.perlbrew.pl
+```
 
 Pipe the script to bash to run the installation script:
-
-### cat install.perlbrew.pl | bash
+```bash
+cat install.perlbrew.pl | bash
+```
 
 This will create a new directory structure in /home/username/perl5, where Perlbrew will store its support files and versions of Perl. You’ll see the following output from the installation script:
 Output
+```bash
+Download the latest perlbrew
 
-### Download the latest perlbrew
-
-### Installing perlbrew
+Installing perlbrew
 perlbrew is installed: ~/perl5/perlbrew/bin/perlbrew
 
 perlbrew root (~/perl5/perlbrew) is initialized.
@@ -58,7 +62,7 @@ Happy brewing!
  Installing patchperl
 
  Done
-
+```
 
 Next, use the perlbrew utility to create some initial configuration files and directories in /home/username/perl5/perlbrew:
 Type this command:
