@@ -68,7 +68,7 @@ Output
 You are already running the installed perlbrew:
     /home/sammy/perl5/perlbrew/bin/perlbrew
 ```
-#### Perlbrew is now installed, but you’ll want to modify your shell’s configuration files to make it easier to use  
+Perlbrew is now installed, but you’ll want to modify your shell’s configuration files to make it easier to use  
 
 # Step 2 – Editing Your .bashrc to Include Perlbrew
 
