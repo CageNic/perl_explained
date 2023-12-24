@@ -158,7 +158,6 @@ To use your new Perl installation, run the following command:
 ```bash
 perlbrew use perl-5.24.1
 ```
-
 This command updates the PERLBREW_PERL environment variable to point to the specified Perl version for your current login session.
 If you want a version of Perl to be your default each time you log in, run this command:  
 
@@ -191,11 +190,9 @@ Parial Output
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/5.24.1
 ```    .
 Perlbrew installs just the core Perl code. To see which modules comprise the core for a particular version of Perl, execute this command:  
-
 ```bash
 corelist -v 5.24.1
 ```
-
 At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with ```bash perlbrew switch-off```  
 
 The perlbrew command, issued with no flags, generates a simple listing of helpful commands. The command perlbrew help generates more detailed help information.
