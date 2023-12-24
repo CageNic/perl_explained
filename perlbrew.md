@@ -165,7 +165,6 @@ If you want a version of Perl to be your default each time you log in, run this 
 ```bash
 perlbrew switch perl-5.24.1
 ```
-
 This command sets the PERLBREW_PERL environment variable to point to the specified Perl version every time you log in.
 
 Verify that you’re now using Perl 5.24.1:  
