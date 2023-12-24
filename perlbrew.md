@@ -41,7 +41,6 @@ cat install.perlbrew.pl | bash
 ```
 
 This will create a new directory structure in /home/username/perl5, where Perlbrew will store its support files and versions of Perl. You’ll see the following output from the installation script:
-Output
 ```
 Download the latest perlbrew
 Installing perlbrew
