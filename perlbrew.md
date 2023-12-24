@@ -138,7 +138,7 @@ Install it with perlbrew install:
 perlbrew install perl-5.24.1
 ```
 
-The Perl installation can take quite a while to build and install, generally about 20 minutes. Do not interrupt the build process. If you want to see the build’s progress, you can open a separate terminal session and monitor the build log with tail -f ~/perl5/perlbrew/build.perl-5.24.1.log.
+The Perl installation can take quite a while to build and install, generally about 20 minutes. Do not interrupt the build process. If you want to see the build’s progress, you can open a separate terminal session and monitor the build log with ```tail -f ~/perl5/perlbrew/build.perl-5.24.1.log```  
 After the build completes, you will see the following output from Perlbrew:
 [secondary_label Output] 
 
