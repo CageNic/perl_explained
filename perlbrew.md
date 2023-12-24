@@ -219,7 +219,7 @@ curl -L https://cpanmin.us | perl - App::cpanminus
 
 You’ll see the following output:  
 Output
-
+```bash
 --> Working on App::cpanminus
 Fetching http://www.cpan.org/authors/id/M/MI/MIYAGAWA/App-cpanminus-1.7043.tar.gz ... OK
 Configuring App-cpanminus-1.7043 ... OK
@@ -232,17 +232,20 @@ You should see App::cpanimus in the output:
 Output
 App::cpanminus
 Perl
+```bash
 
-You can now use the command-line utility cpanm to install additional modules and their dependencies. Let’s use it to install the Email::Simple module, which you’d need if you were writing some Perl code to send email messages.
+You can now use the command-line utility cpanm to install additional modules and their dependencies. Let’s use it to install the Email::Simple module, which you’d need if you were writing some Perl code to send email messages
 cpanm Email::Simple
 
 When the installation is complete, review the list of modules again:  
-
-## perlbrew list-modules
+```bash
+perlbrew list-modules
+```
 
 Expected Output
-
+```bash
 App::cpanminus
 Email::Date::Format
 Email::Simple
 Perl
+```
