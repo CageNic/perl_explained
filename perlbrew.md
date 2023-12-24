@@ -16,20 +16,20 @@ Building Perl requires two gcc-related packages, libgcc and gcc. To see if you a
 rpm -qa | grep gcc
 ```
 If they’re installed, you’ll see the following output:  
-
+```
 libgcc-4.8.5-11.el7.x86_64
 gcc-4.8.5-11.el7.x86_64  
-
+```
 You also need the bzip2-libs and bzip2 packages. Check to see that they’re installed as well:  
 ```
 rpm -qa | grep bzip2
 ```
 
 If they’re both installed, you’ll see the following:
-
+```
 bzip2-libs-1.0.6-13.el7.x86_64
 Bzip2-1.0.6-13.el7.x86_64  
-
+```
 With the prerequisites out of the way, you can install Perlbrew. Download the installation script to your server:
 ```
 curl -L https://install.perlbrew.pl -o install.perlbrew.pl
