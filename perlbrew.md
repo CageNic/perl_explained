@@ -12,7 +12,9 @@ Perlbrew needs gcc, a compiler, and bzip2, a compression utility, in order to co
 Note: The package version numbers you see in the following examples may be higher than shown in this guide because revisions are periodically being made to these packages.
 Building Perl requires two gcc-related packages, libgcc and gcc. To see if you already have these packages, execute the following command:  
 
-### rpm -qa | grep gcc
+```bash
+rpm -qa | grep gcc
+```
 If they’re installed, you’ll see the following output:  
 
 libgcc-4.8.5-11.el7.x86_64
