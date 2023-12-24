@@ -53,9 +53,9 @@ Simply run `perlbrew` for usage details.
 
 Happy brewing!
 
-### Installing patchperl
+ Installing patchperl
 
-### Done
+ Done
 
 
 Next, use the perlbrew utility to create some initial configuration files and directories in /home/username/perl5/perlbrew:
