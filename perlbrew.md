@@ -66,7 +66,9 @@ Happy brewing!
 
 Next, use the perlbrew utility to create some initial configuration files and directories in /home/username/perl5/perlbrew:
 Type this command:
-```bash ~/perl5/perlbrew/bin/perlbrew self-install ```
+```bash
+~/perl5/perlbrew/bin/perlbrew self-install
+```
 
 You’ll see the following output:
 Output
@@ -88,7 +90,9 @@ Save the file and exit the editor
 Then log out and then log back in to ensure that your .bashrd file loads Perlbrew’s settings. It will now add /home/username/perl5/perlbrew/bin to the front of your PATH environment variable, and set some other environment variables Perlbrew needs.
 Verify that these environment variables have been set by running the env command and filtering the results with grep for the text PERL:
 
-```bash env | grep PERL``` 
+```bash
+env | grep PERL
+'''
 
 You should see entries similar to the following:
 Output
