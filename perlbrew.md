@@ -175,8 +175,8 @@ perl -V
 ```
 
 You should see the following output:
+```bash
 Parial Output
-...
 %ENV:
     PERLBREW_BASHRC_VERSION="0.78"
     PERLBREW_HOME="/home/sammy/.perlbrew"
@@ -190,8 +190,7 @@ Parial Output
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/site_perl/5.24.1
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/5.24.1/x86_64-linux
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/5.24.1
-    .
-
+```    .
 Perlbrew installs just the core Perl code. To see which modules comprise the core for a particular version of Perl, execute this command:  
 
 ```bash
