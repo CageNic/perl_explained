@@ -5,7 +5,7 @@ Original version : https://www.digitalocean.com/community/tutorials/how-to-insta
 *Adapted to install on Ubuntu 20.04.1 which does not use .bash_profile
 Ubuntu 20.04.1 does have ~/.profile - but adding this line to it (source ~/perl5/perlbrew/etc/bashrc) in testing did not work*
 
-*Instead adding source ~/perl5/perlbrew/etc/bashrc to the ~/.bashrc file after installing (and starting a new terminal) worked*
+*Instead adding* ```source ~/perl5/perlbrew/etc/bashrc``` *to the* ```~/.bashrc``` *file after installing (and starting a new terminal) worked*
 
 # Step 1 – Installing Perlbrew
 Perlbrew needs gcc, a compiler, and bzip2, a compression utility, in order to compile and install Perl. 
@@ -143,9 +143,9 @@ perl-5.24.1 is successfully installed
 
 When the build completes, the last line of the build log file will be:
 Output
-
+```
 ##### Brew Finished #####
-
+```
 You can repeat this process for each version of Perl you want to install. This guide only demonstrates installing one version, but this step can be repeated for as many versions as you need  
 
 # Step 4 – Managing Your New Perl Installation
@@ -183,7 +183,8 @@ Parial Output
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/site_perl/5.24.1
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/5.24.1/x86_64-linux
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/5.24.1
-```    .
+```
+
 Perlbrew installs just the core Perl code. To see which modules comprise the core for a particular version of Perl, execute this command:  
 ```bash
 corelist -v 5.24.1
