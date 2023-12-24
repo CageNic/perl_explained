@@ -2,10 +2,10 @@
 
 Original version : https://www.digitalocean.com/community/tutorials/how-to-install-perlbrew-and-manage-multiple-versions-of-perl-5-on-centos-7
 
-Adapted to install on Ubuntu 20.04.1 which does not use .bash_profile
-Ubuntu 20.04.1 does have ~/.profile - but adding this line to it (source ~/perl5/perlbrew/etc/bashrc) in testing did not work
+*Adapted to install on Ubuntu 20.04.1 which does not use .bash_profile
+Ubuntu 20.04.1 does have ~/.profile - but adding this line to it (source ~/perl5/perlbrew/etc/bashrc) in testing did not work*
 
-Instead adding source ~/perl5/perlbrew/etc/bashrc to the ~/.bashrc file after installing (and starting a new terminal) worked. 
+*Instead adding source ~/perl5/perlbrew/etc/bashrc to the ~/.bashrc file after installing (and starting a new terminal) worked*
 
 # Step 1 – Installing Perlbrew
 Perlbrew needs gcc, a compiler, and bzip2, a compression utility, in order to compile and install Perl. 
@@ -66,7 +66,7 @@ Happy brewing!
 
 Next, use the perlbrew utility to create some initial configuration files and directories in /home/username/perl5/perlbrew:
 Type this command:
-~/perl5/perlbrew/bin/perlbrew self-install
+```bash ~/perl5/perlbrew/bin/perlbrew self-install ```
 
 You’ll see the following output:
 Output
@@ -79,7 +79,7 @@ You are already running the installed perlbrew:
 # Step 2 – Editing Your .bashrc to Include Perlbrew
 
 Open the file ~/.bashrc in your editor:
-### vi ~/.bashrc
+```bash vi ~/.bashrc ```
 
 Add the following line at the bottom of the file to include the Perlbrew settings:
 ### source ~/perl5/perlbrew/etc/bashrc
@@ -88,14 +88,15 @@ Save the file and exit the editor
 Then log out and then log back in to ensure that your .bashrd file loads Perlbrew’s settings. It will now add /home/username/perl5/perlbrew/bin to the front of your PATH environment variable, and set some other environment variables Perlbrew needs.
 Verify that these environment variables have been set by running the env command and filtering the results with grep for the text PERL:
 
-## env | grep PERL  
+```bash env | grep PERL``` 
 
 You should see entries similar to the following:
 Output
-
+```bash
 PERLBREW_BASHRC_VERSION=0.78  
 PERLBREW_ROOT=/home/username/perl5/perlbrew
 PERLBREW_HOME=/home/username/.perlbrew
+```
 
 These environment variables tell Perlbrew where important directories are located. The version number may be higher if Perlbrew was revised after this tutorial was published.
 Typing which perlbrew should now identify the full path to the perlbrew command:
@@ -111,8 +112,9 @@ Now that Perlbrew is installed and configured, let’s start using it
 # Step 3 – Installing and Building Your Perl Version  
 
 Let’s use Perlbrew to install a stable version of Perl 5. Use the perlbrew command to see which Perl versions are available for installation:
-perlbrew available
-You’ll see a listing similar to the following partial listing:
+```bash perlbrew available```
+You’ll see a listing similar to the following partial listing:  
+```bash
 Partial Listing
  perl-5.25.11
   perl-5.24.1
@@ -120,13 +122,14 @@ Partial Listing
   perl-5.20.3
   perl-5.18.4
   ...
+```
 
 Odd-numbered major versions, such as perl-5.25, are under active development and are not considered stable or production-ready. In general, you won’t use versions older than 5.10.1 unless you have legacy code that requires one of these older versions.
 According to the output, perl-5.24.1 is the most recent stable version, as it has the largest even major number. You can pick any Perl version shown in the list, but for this tutorial, we’ll install perl-5.24.1.
 
 Install it with perlbrew install:
 
-## perlbrew install perl-5.24.1
+```bash perlbrew install perl-5.24.1```
 
 The Perl installation can take quite a while to build and install, generally about 20 minutes. Do not interrupt the build process. If you want to see the build’s progress, you can open a separate terminal session and monitor the build log with tail -f ~/perl5/perlbrew/build.perl-5.24.1.log.
 After the build completes, you will see the following output from Perlbrew:
@@ -142,11 +145,14 @@ Output
 You can repeat this process for each version of Perl you want to install. This guide only demonstrates installing one version, but this step can be repeated for as many versions as you need  
 
 # Step 4 – Managing Your New Perl Installation
-To use your new Perl installation, run the following command:
-perlbrew use perl-5.24.1
+To use your new Perl installation, run the following command:  
+
+```bash perlbrew use perl-5.24.1```  
+
 This command updates the PERLBREW_PERL environment variable to point to the specified Perl version for your current login session.
-If you want a version of Perl to be your default each time you log in, run this command:
-perlbrew switch perl-5.24.1
+If you want a version of Perl to be your default each time you log in, run this command:  
+
+```bash perlbrew switch perl-5.24.1```
 This command sets the PERLBREW_PERL environment variable to point to the specified Perl version every time you log in.
 
 Verify that you’re now using Perl 5.24.1:  
@@ -171,9 +177,12 @@ Parial Output
     /home/sammy/perl5/perlbrew/perls/perl-5.24.1/lib/5.24.1
     .
 
-Perlbrew installs just the core Perl code. To see which modules comprise the core for a particular version of Perl, execute this command:
-corelist -v 5.24.1
-At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with perlbrew switch-off.
+Perlbrew installs just the core Perl code. To see which modules comprise the core for a particular version of Perl, execute this command:  
+
+```bash corelist -v 5.24.1```  
+
+At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with ```bash perlbrew switch-off```  
+
 The perlbrew command, issued with no flags, generates a simple listing of helpful commands. The command perlbrew help generates more detailed help information.
 
 # Step 5 – Testing Your Perl Installation by Installing Modules from CPAN
@@ -181,11 +190,12 @@ Perl provides a vast array of public code modules that extend the core language.
 App::cpanminus is a Perl module that lets you explore the CPAN repository and download modules. It’s popular and easy to use. Let’s install this module and use it to test your new Perl installation.
 Ensure you are using your new Perl installation:  
 
-## perlbrew use perl-5.24.1  
+```bash perlbrew use perl-5.24.1```  
 
 Install the cpanminus module with:  
 
-## curl -L https://cpanmin.us | perl - App::cpanminus
+```bash curl -L https://cpanmin.us | perl - App::cpanminus```  
+
 You’ll see the following output:  
 Output
 
