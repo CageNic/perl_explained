@@ -173,7 +173,7 @@ perl -V
 ```
 
 You should see the following output:
-```bash
+```perl
 Parial Output
 %ENV:
     PERLBREW_BASHRC_VERSION="0.78"
