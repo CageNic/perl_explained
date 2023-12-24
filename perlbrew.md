@@ -105,17 +105,20 @@ which perlbrew
 
 You should see the following in your terminal:
 Expected Output
-
+```
 ~/perl5/perlbrew/bin/perlbrew
-
+```
 Now that Perlbrew is installed and configured, let’s start using it  
 
 # Step 3 – Installing and Building Your Perl Version  
 
-Let’s use Perlbrew to install a stable version of Perl 5. Use the perlbrew command to see which Perl versions are available for installation:
-```bash perlbrew available```
+Let’s use Perlbrew to install a stable version of Perl 5. Use the perlbrew command to see which Perl versions are available for installation:  
+
+```
+bash perlbrew available
+```
 You’ll see a listing similar to the following partial listing:  
-```bash
+```
 Partial Listing
  perl-5.25.11
   perl-5.24.1
@@ -124,12 +127,10 @@ Partial Listing
   perl-5.18.4
   ...
 ```
-
 Odd-numbered major versions, such as perl-5.25, are under active development and are not considered stable or production-ready. In general, you won’t use versions older than 5.10.1 unless you have legacy code that requires one of these older versions.
 According to the output, perl-5.24.1 is the most recent stable version, as it has the largest even major number. You can pick any Perl version shown in the list, but for this tutorial, we’ll install perl-5.24.1.
 
 Install it with perlbrew install:
-
 ```bash
 perlbrew install perl-5.24.1
 ```
