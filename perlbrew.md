@@ -12,7 +12,7 @@ Perlbrew needs gcc, a compiler, and bzip2, a compression utility, in order to co
 Note: The package version numbers you see in the following examples may be higher than shown in this guide because revisions are periodically being made to these packages.
 Building Perl requires two gcc-related packages, libgcc and gcc. To see if you already have these packages, execute the following command:  
 
-```bash
+```
 rpm -qa | grep gcc
 ```
 If they’re installed, you’ll see the following output:  
@@ -21,7 +21,7 @@ libgcc-4.8.5-11.el7.x86_64
 gcc-4.8.5-11.el7.x86_64  
 
 You also need the bzip2-libs and bzip2 packages. Check to see that they’re installed as well:  
-```bash
+```
 rpm -qa | grep bzip2
 ```
 
@@ -31,74 +31,69 @@ bzip2-libs-1.0.6-13.el7.x86_64
 Bzip2-1.0.6-13.el7.x86_64  
 
 With the prerequisites out of the way, you can install Perlbrew. Download the installation script to your server:
-```bash
+```
 curl -L https://install.perlbrew.pl -o install.perlbrew.pl
 ```
 
 Pipe the script to bash to run the installation script:
-```bash
+```
 cat install.perlbrew.pl | bash
 ```
 
 This will create a new directory structure in /home/username/perl5, where Perlbrew will store its support files and versions of Perl. You’ll see the following output from the installation script:
 Output
-```bash
+```
 Download the latest perlbrew
-
 Installing perlbrew
 perlbrew is installed: ~/perl5/perlbrew/bin/perlbrew
-
 perlbrew root (~/perl5/perlbrew) is initialized.
-
 Append the following piece of code to the end of your ~/.bash_profile and start a
 new shell, perlbrew should be up and fully functional from there:
 
     source ~/perl5/perlbrew/etc/bashrc
 
 Simply run `perlbrew` for usage details.
-
 Happy brewing!
-
  Installing patchperl
-
  Done
 ```
 
 Next, use the perlbrew utility to create some initial configuration files and directories in /home/username/perl5/perlbrew:
 Type this command:
-```bash
+```
 ~/perl5/perlbrew/bin/perlbrew self-install
 ```
-
 You’ll see the following output:
+```
 Output
-
 You are already running the installed perlbrew:
     /home/sammy/perl5/perlbrew/bin/perlbrew
 
 #### Perlbrew is now installed, but you’ll want to modify your shell’s configuration files to make it easier to use  
-
+```
 # Step 2 – Editing Your .bashrc to Include Perlbrew
 
 Open the file ~/.bashrc in your editor:
-```bash
+```
 vi ~/.bashrc
 ```
 
 Add the following line at the bottom of the file to include the Perlbrew settings:
-### source ~/perl5/perlbrew/etc/bashrc
+```
+source ~/perl5/perlbrew/etc/bashrc
+```
 
 Save the file and exit the editor
 Then log out and then log back in to ensure that your .bashrd file loads Perlbrew’s settings. It will now add /home/username/perl5/perlbrew/bin to the front of your PATH environment variable, and set some other environment variables Perlbrew needs.
 Verify that these environment variables have been set by running the env command and filtering the results with grep for the text PERL:
 
-```bash
+```
 env | grep PERL
 ```
 
 You should see entries similar to the following:
 Output
-```bash
+```
 PERLBREW_BASHRC_VERSION=0.78  
 PERLBREW_ROOT=/home/username/perl5/perlbrew
 PERLBREW_HOME=/home/username/.perlbrew
