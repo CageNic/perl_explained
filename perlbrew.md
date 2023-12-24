@@ -135,7 +135,9 @@ According to the output, perl-5.24.1 is the most recent stable version, as it ha
 
 Install it with perlbrew install:
 
-```bash perlbrew install perl-5.24.1```
+```bash
+perlbrew install perl-5.24.1
+```
 
 The Perl installation can take quite a while to build and install, generally about 20 minutes. Do not interrupt the build process. If you want to see the build’s progress, you can open a separate terminal session and monitor the build log with tail -f ~/perl5/perlbrew/build.perl-5.24.1.log.
 After the build completes, you will see the following output from Perlbrew:
@@ -153,17 +155,24 @@ You can repeat this process for each version of Perl you want to install. This g
 # Step 4 – Managing Your New Perl Installation
 To use your new Perl installation, run the following command:  
 
-```bash perlbrew use perl-5.24.1```  
+```bash
+perlbrew use perl-5.24.1
+```
 
 This command updates the PERLBREW_PERL environment variable to point to the specified Perl version for your current login session.
 If you want a version of Perl to be your default each time you log in, run this command:  
 
-```bash perlbrew switch perl-5.24.1```
+```bash
+perlbrew switch perl-5.24.1
+```
+
 This command sets the PERLBREW_PERL environment variable to point to the specified Perl version every time you log in.
 
 Verify that you’re now using Perl 5.24.1:  
 
-## perl -V
+```bash
+perl -V
+```
 
 You should see the following output:
 Parial Output
@@ -185,7 +194,9 @@ Parial Output
 
 Perlbrew installs just the core Perl code. To see which modules comprise the core for a particular version of Perl, execute this command:  
 
-```bash corelist -v 5.24.1```  
+```bash
+corelist -v 5.24.1
+```
 
 At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with ```bash perlbrew switch-off```  
 
@@ -196,11 +207,15 @@ Perl provides a vast array of public code modules that extend the core language.
 App::cpanminus is a Perl module that lets you explore the CPAN repository and download modules. It’s popular and easy to use. Let’s install this module and use it to test your new Perl installation.
 Ensure you are using your new Perl installation:  
 
-```bash perlbrew use perl-5.24.1```  
+```bash
+perlbrew use perl-5.24.1
+```
 
 Install the cpanminus module with:  
 
-```bash curl -L https://cpanmin.us | perl - App::cpanminus```  
+```bash
+curl -L https://cpanmin.us | perl - App::cpanminus
+```
 
 You’ll see the following output:  
 Output
