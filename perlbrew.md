@@ -8,7 +8,7 @@ Ubuntu 20.04.1 does have ~/.profile - but adding this line to it (source ~/perl5
 *Instead adding* ```source ~/perl5/perlbrew/etc/bashrc``` *to the* ```~/.bashrc``` *file after installing (and starting a new terminal) worked*
 
 # Step 1 – Installing Perlbrew
-Perlbrew needs gcc, a compiler, and bzip2, a compression utility, in order to compile and install Perl. 
+Perlbrew needs gcc, a compiler, and bzip2, a compression utility, in order to compile and install Perl  
 Note: The package version numbers you see in the following examples may be higher than shown in this guide because revisions are periodically being made to these packages.
 Building Perl requires two gcc-related packages, libgcc and gcc. To see if you already have these packages, execute the following command:  
 
@@ -40,7 +40,8 @@ Pipe the script to bash to run the installation script:
 cat install.perlbrew.pl | bash
 ```
 
-This will create a new directory structure in /home/username/perl5, where Perlbrew will store its support files and versions of Perl. You’ll see the following output from the installation script:
+This will create a new directory structure in /home/username/perl5, where Perlbrew will store its support files and versions of Perl  
+You’ll see the following output from the installation script:
 ```
 Download the latest perlbrew
 Installing perlbrew
@@ -83,7 +84,8 @@ source ~/perl5/perlbrew/etc/bashrc
 ```
 
 Save the file and exit the editor
-Then log out and then log back in to ensure that your .bashrd file loads Perlbrew’s settings. It will now add /home/username/perl5/perlbrew/bin to the front of your PATH environment variable, and set some other environment variables Perlbrew needs.
+Then log out and then log back in to ensure that your .bashrd file loads Perlbrew’s settings  
+It will now add /home/username/perl5/perlbrew/bin to the front of your PATH environment variable, and set some other environment variables Perlbrew needs  
 Verify that these environment variables have been set by running the env command and filtering the results with grep for the text PERL:
 
 ```
@@ -98,10 +100,12 @@ PERLBREW_ROOT=/home/username/perl5/perlbrew
 PERLBREW_HOME=/home/username/.perlbrew
 ```
 
-These environment variables tell Perlbrew where important directories are located. The version number may be higher if Perlbrew was revised after this tutorial was published.
-Typing which perlbrew should now identify the full path to the perlbrew command:
+These environment variables tell Perlbrew where important directories are located  
+The version number may be higher if Perlbrew was revised after this tutorial was published  
+Typing which perlbrew should now identify the full path to the perlbrew command:  
+```
 which perlbrew
-
+```
 You should see the following in your terminal:
 Expected Output
 ```
