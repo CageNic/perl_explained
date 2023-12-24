@@ -230,11 +230,11 @@ App::cpanminus
 Perl
 ```
 You can now use the command-line utility cpanm to install additional modules and their dependencies. Let’s use it to install the Email::Simple module, which you’d need if you were writing some Perl code to send email messages
-```bash
+```
 cpanm Email::Simple
 ```
 When the installation is complete, review the list of modules again:  
-```bash
+```
 perlbrew list-modules
 ```
 
