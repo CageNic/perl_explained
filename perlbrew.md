@@ -81,7 +81,9 @@ You are already running the installed perlbrew:
 # Step 2 – Editing Your .bashrc to Include Perlbrew
 
 Open the file ~/.bashrc in your editor:
-```bash vi ~/.bashrc ```
+```bash
+vi ~/.bashrc
+```
 
 Add the following line at the bottom of the file to include the Perlbrew settings:
 ### source ~/perl5/perlbrew/etc/bashrc
@@ -92,7 +94,7 @@ Verify that these environment variables have been set by running the env command
 
 ```bash
 env | grep PERL
-'''
+```
 
 You should see entries similar to the following:
 Output
