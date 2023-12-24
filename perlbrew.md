@@ -193,7 +193,9 @@ Perlbrew installs just the core Perl code. To see which modules comprise the cor
 ```bash
 corelist -v 5.24.1
 ```
-At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with ```bash perlbrew switch-off```  
+At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with
+```bash perlbrew switch-off
+```
 
 The perlbrew command, issued with no flags, generates a simple listing of helpful commands. The command perlbrew help generates more detailed help information.
 
