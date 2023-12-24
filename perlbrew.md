@@ -171,9 +171,8 @@ Verify that you’re now using Perl 5.24.1:
 ```bash
 perl -V
 ```
-
 You should see the following output:
-```perl
+```bash
 Parial Output
 %ENV:
     PERLBREW_BASHRC_VERSION="0.78"
@@ -194,9 +193,9 @@ Perlbrew installs just the core Perl code. To see which modules comprise the cor
 corelist -v 5.24.1
 ```
 At any time after using the perlbrew use or perlbrew switch commands, you can return to using the vendor version of Perl by using the command perlbrew off. If you used perlbrew switch to set a new default Perl, you can remove that default setting with
-```bash perlbrew switch-off
+```bash
+perbrew switch-off
 ```
-
 The perlbrew command, issued with no flags, generates a simple listing of helpful commands. The command perlbrew help generates more detailed help information.
 
 # Step 5 – Testing Your Perl Installation by Installing Modules from CPAN
