@@ -1,17 +1,80 @@
+#################################################################
+# creating a database and entering data into it via web browser #
+#################################################################
 
-Creating a simple web interface with a search feature for an SQLite database using Perl and Dancer can be accomplished with the following steps. Make sure you have Dancer installed on your system:
 
-bash
-Copy code
-cpan Dancer
+To create a Dancer2 web application in Perl that allows users to enter data into a database, you can follow these general steps:
+
+    Install Dancer2 and a database module like DBI and DBD::SQLite (or another database driver of your choice).
+
+$ cpan install Dancer2 DBI DBD::SQLite
+
+
+Create your Dancer2 application directory and navigate to it.
+
+$ mkdir MyDancerApp
+$ cd MyDancerApp
+
+Create a Dancer2 application script (app.pl) with the following content:
+
+# app.pl
+use Dancer2;
+use Dancer2::Plugin::Database;
+
+# Set up database connection (replace with your database configuration)
+set database => 'sqlite:' . setting('appdir') . '/mydatabase.db';
+
+# Define routes
+get '/' => sub {
+    # Display a form to enter data
+    template 'index';
+};
+
+post '/submit' => sub {
+    # Receive form data and insert into the database
+    my $name = param('name');
+    my $email = param('email');
+
+    database->quick_insert('mytable', { name => $name, email => $email });
+
+    redirect '/';
+};
+
+start;
+
+Create a views directory inside your application directory, and inside it, create a file named index.tt with the following content:
+
+<!-- views/index.tt -->
+<html>
+<head>
+    <title>Enter Data</title>
+</head>
+<body>
+    <h1>Enter Data</h1>
+    <form action="/submit" method="post">
+        <label for="name">Name:</label>
+        <input type="text" name="name" required><br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" required><br>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
+
+
+Run your Dancer2 application
+
+$ plackup app.pl
+
+######################################################################################################
+# creating a simple web interface with a search feature for an SQLite database using Perl and Dancer #
+######################################################################################################
+
 Now, let's create a simple Dancer web application. Below is a basic example with a search form and displaying results:
 
 Create the Dancer App:
-
 Create a file named app.pl:
 
-perl
-Copy code
 # app.pl
 
 use Dancer;
@@ -39,14 +102,14 @@ sub search_database {
 }
 
 start;
-Create the Templates:
 
-Create a folder named views and within it, create two files: index.tt and results.tt.
+
+# Create the Templates:
+
+# Create a folder named views and within it, create two files: index.tt and results.tt.
 
 views/index.tt:
 
-html
-Copy code
 <!-- views/index.tt -->
 
 <html>
@@ -81,22 +144,24 @@ Copy code
     </ul>
 </body>
 </html>
-Run the Dancer App:
 
-Save all the files, and in the terminal, run:
+# Run the Dancer App:
 
-bash
-Copy code
+# Save all the files, and in the terminal, run:
+
 perl app.pl
-Open a web browser and navigate to http://localhost:3000. You should see the search form.
 
-SQLite Database Integration:
+# Open a web browser and navigate to http://localhost:3000. You should see the search form
 
-Integrate your SQLite database with the search_database subroutine in app.pl. Use the DBI module to connect and execute queries.
+###############################
+# SQLite Database Integration #
+###############################
 
-perl
-Copy code
 # Modify the search_database subroutine in app.pl
+
+# Integrate your SQLite database with the search_database subroutine in app.pl
+
+
 
 use DBI;
 
