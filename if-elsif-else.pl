@@ -31,3 +31,53 @@ while (my $lines = <$fh>) {
   print $date , "\n";
 }
 close $fh;
+
+############################################
+# perl if AND OR with parentheses examined #
+############################################
+
+# both $age < 30 and $age > 10 must be satisfied
+
+my $age = 22;
+
+if ($age < 30 && $age > 10) {
+
+   print qq{You're young, but no spring chicken\n};
+
+}
+
+# either $age < 13 or $age > 19 must be true in order that the specified statements be executed
+
+my $age = 22;
+
+if ($age < 13 || $age > 19) {
+
+   print qq{You're not a teenager\n};
+
+}
+
+If you have multiple such conditions to test for, it is wise to group them using brackets:
+
+my $age = 22;
+
+my $gender = 'female';
+
+if ($gender eq 'female' && ($age < 13 || $age > 19) ) {
+
+   print qq{You're a female, but not a teenager\n};
+
+}
+
+Sometimes, it is more natural to express a condition as the negation of another condition.
+For this, you can use the ! operator:
+
+my $age = 22;
+
+my $gender = 'female';
+
+if ($gender eq 'female' && ! ($age > 12 && $age < 20) ) {
+
+   print qq{You're a female, but not a teenager\n};
+
+}
+
