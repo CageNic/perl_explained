@@ -2,11 +2,13 @@
 
 You can use the SELECT statement to perform a simple calculation as follows:
 
-SELECT	1 + 1;
+```SELECT 1 + 1;
+```
 
-SELECT 
+```SELECT 
    10 / 5, 
    2 * 4 ;
+```
 
 
 ### Querying data from a table using the SELECT statement
