@@ -63,7 +63,7 @@ SQLite returns the following result:
 Tracks Table partial data
 To get data from all columns, you specify the columns of the tracks table in the SELECT clause as follows:
 
-SELECT
+```SELECT
 	trackid,
 	name,
 	albumid,
