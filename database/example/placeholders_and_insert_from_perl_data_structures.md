@@ -102,5 +102,22 @@ my @employees_loh_2 = (
         $sth->execute( @{$other_thing}{@slice} ) ;
                      }
 $dbh->disconnect ;
-exit ;
+
+# update the database with standard perl syntax
+# not using the DBI update method
+
+# this doesn't update the name as the id in the aoh is already 7                   
+                      
+$employees_loh_2[0]{name}="Kimbra" unless exists $employees_loh_2[0]{id}==7 ;
+
+# this does update the name as the id in the aoh is not 7
+
+$employees_loh_2[0]{name}="Kimbra" unless exists $employees_loh_2[0]{id}==7 ;
+
+    foreach my $other_thing (@employees_loh_2) {
+        $sth->execute( @{$other_thing}{@slice} ) ;
+                                       }
+ 
+$dbh->disconnect ;
+exit ;    
 ```
