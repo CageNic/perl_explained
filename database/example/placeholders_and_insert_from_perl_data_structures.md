@@ -101,7 +101,6 @@ my @employees_loh_2 = (
     foreach my $other_thing (@employees_loh_2) {
         $sth->execute( @{$other_thing}{@slice} ) ;
                      }
-$dbh->disconnect ;
 
 # update the database with standard perl syntax
 # not using the DBI update method
@@ -116,8 +115,7 @@ $employees_loh_2[0]{name}="Kimbra" unless exists $employees_loh_2[0]{id}==7 ;
 
     foreach my $other_thing (@employees_loh_2) {
         $sth->execute( @{$other_thing}{@slice} ) ;
-                                       }
- 
+
 $dbh->disconnect ;
 exit ;    
 ```
