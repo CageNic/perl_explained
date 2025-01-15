@@ -2,8 +2,7 @@
 
 You can use the SELECT statement to perform a simple calculation as follows:
 
-```SELECT 1 + 1;
-```
+```SELECT 1 + 1;```
 
 ```SELECT 
    10 / 5, 
