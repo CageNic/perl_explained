@@ -46,7 +46,9 @@ Let’s take a look at the tracks table in the sample database\
 The tracks table contains columns and rows\
 It looks like a spreadsheet
 
-<!-- <img align="right" width="200" height="200" src="/tracks_table.png"> --->
+<!-- <img align="right" width="200" height="200" src="tracks_table.png"> --->
+
+https://github.com/CageNic/perl_explained/blob/main/database/tracks_table.png
 
 Tracks Table data
 To get data from the tracks table such as trackid, track name, composer, and unit price, you use the following statement:
