@@ -39,21 +39,19 @@ Even though the SELECT clause appears before the FROM clause, SQLite evaluates t
 First, specify the table where you want to get data from in the FROM clause\
 Notice that you can have more than one table in the FROM clause\
 Second, specify a column or a list of comma-separated columns in the SELECT clause\
-You use the semicolon (;) to terminate the statement
+You use the semicolon (;) to terminate the statement\
 
 ### SQLite SELECT examples
 Let’s take a look at the tracks table in the sample database\
 The tracks table contains columns and rows\
 It looks like a spreadsheet
 
-<!-- <img align="right" width="200" height="200" src="tracks_table.png"> --->
+![image info](tracks_table.png)
 
-https://github.com/CageNic/perl_explained/blob/main/database/tracks_table.png
-
-Tracks Table data
+### Tracks Table data
 To get data from the tracks table such as trackid, track name, composer, and unit price, you use the following statement:
-
-```SELECT
+```
+SELECT
 	trackid,
 	name,
 	composer,
@@ -62,12 +60,12 @@ FROM
 	tracks;
  ```
 You specify a list column names, which you want to get data, in the SELECT clause and the tracks table in the FROM clause\
-SQLite returns the following result:
 
-Tracks Table partial data
+### Tracks Table partial data
 To get data from all columns, you specify the columns of the tracks table in the SELECT clause as follows:
 
-```SELECT
+```
+SELECT
 	trackid,
 	name,
 	albumid,
@@ -81,7 +79,8 @@ FROM
 	tracks;
 ```
 
-For a table with many columns, the query would be so long that time-consuming to type. To avoid this, you can use the asterisk (*), which is the shorthand for all columns of the table as follows:
+For a table with many columns, the query would be so long that time-consuming to type\
+To avoid this, you can use the asterisk (*), which is the shorthand for all columns of the table as follows:
 
 ```SELECT * FROM tracks;```
 
