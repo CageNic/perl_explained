@@ -2,6 +2,8 @@
 # traverse current working directory and find sub folders and files #
 #####################################################################
 
+# reports on file size and line count per file
+
 #!/usr/bin/perl
 use strict;
 use warnings;
@@ -59,3 +61,53 @@ find({ wanted => \&process_file, no_chdir => 1 }, ".");
 print "Total number of readable files: $file_count\n";
 print "Total number of directories: $dir_count\n";
 print "Total size of all files: $total_size bytes\n";
+
+#######################################################################
+# this is for just files in current working directory and sub folders #
+#######################################################################
+
+# Perl script that checks files in directory and sub directories, reports on their size and lines
+# Then a collective file count and collective file size
+
+# run on command line with perl name_of_this_script.pl stdb -oL > fileout.txt
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use File::Find;
+use File::stat;
+
+my $file_count = 0;
+my $total_size = 0;
+
+sub process_file {
+	my $file = $File::Find::name;
+	return if !-f $file;
+	
+	if (-r $file) {
+	my $size = -s $file;
+	$total_size += $size;
+	
+	open (my $fh ,'<', $file) or die $!;
+	my $line_count = 0;
+	$line_count++ while <$fh>;
+	close $fh;
+	
+
+	$file_count++;
+	
+	print "$file\t$size bytes\tLines\t$line_count\n";
+	}
+	
+	else {
+			print "File: $file is not readable\n";
+			}
+		}
+	
+	find ({wanted => \&process_file, no_chdir => 1}, ".");
+	
+
+print "Total readable files: $file_count\n";
+print "Total size of all files: $total_size bytes\n";
+
+exit;
