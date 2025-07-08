@@ -1,0 +1,100 @@
+##################################################
+# Don’t treat your date like just another number #
+##################################################
+
+There’s more than one type of date that can prove awkward, but this is Perl, and so I’m talking calendar dates. And when I say awkward, I mean the interpretation of how a date should be treated.
+
+It’s very tempting when we see something like this, to think we can always get away with comparing dates as we see them.
+
+10/12/1994
+11/12/1994
+01/01/1995
+02/01/1995
+01/01/1996
+  
+Surely, it’s a simple case of comparing by means of greater than / less than? That is to say, if we can do this…
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+ 
+# if 4 is greater than 2 - which it is
+if ( 4 > 2 ) {
+  print "Four is greater than two" , "\n";
+  }
+    else {
+      print "Four is not greater than two";
+      }
+Which, as you might expect, outputs…
+
+1
+Four is greater than two
+… we can do something similar with a date?
+
+# if 1995 comes before 1996 - which it does
+if ( 01/01/1996 > 10/01/1995) {
+  print "1996 is a later date than 1995 " , "\n";
+  }
+    else {
+      print "Soemthing not quite right" , "\n";
+      }
+
+Which produces…
+
+1
+Something not quite right
+The short answer is, we can’t treat these as dates… yet. We’re just treating them as strings or numbers, depending how you use the operator that is doing the comparing. And if we are treating them as numbers, we’re doing unwanted procedures with the / character, that is creating divisional calculations.
+
+So, here’s something more robust.
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use DateTime::Format::Strptime;
+use feature 'say';
+ 
+# create a date format - British style
+ 
+my $format = DateTime::Format::Strptime->new( pattern => '%d/%m/%Y' );
+ 
+# create a date to use to compare against what's in __DATA__
+ 
+my $compare_date = DateTime->new(year   => 1994, 
+                                 month  => 12, 
+                                 day    => 31, 
+                                 formatter => $format
+                                 );
+             
+while (<DATA>) {
+    chomp;
+    my ($id,$name,$date_text) = split (/,/,$_);
+     
+    # set the text in data to Date objects
+    my $date = $format->parse_datetime($date_text);
+     
+    # set the formatting style
+     
+    $date->set_formatter($format);
+    $format = $date->formatter();
+     
+    # if 31/12/1994 is a later date than the string-to-date object
+      
+    if ( $compare_date > $date) {
+        say "$id date $date comes before " . $compare_date;
+    }
+     
+    # if 31/12/1994 is an earlier date than the string-to-date object
+      else {
+        say "$id date $date comes after " . $compare_date;
+      }
+}
+ 
+ 
+close DATA;
+ 
+__DATA__
+ID1,bar,10/12/1994
+ID2,baz,11/12/1994
+ID3,foobar,01/01/1995
+ID4,foobaz,02/01/1995
+ID5,foofoo,01/01/1996
