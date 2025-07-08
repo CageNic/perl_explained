@@ -1,0 +1,240 @@
+##########################
+# Delete your duplicates #
+##########################
+
+# note that line references refer to the original publication on WordPress and are not relevant to GitHub.
+
+Welcome to part 4.
+
+In the previous posts we looked at how to inspect the validity of a CSV file, how to determine if it fits nicely in a spreadsheet, check whether it will create more columns than needed. Also, we wrote some simple conditions to check year and rating. We then determined we had duplicates based on an ID column, and decided that some were genuine duplicates, and some were not.
+
+We have an updated CSV file for this post. Snake Eyes has a new ID of 12 (it was ID 2 – making it a duplicate ID). We have two new entries for ID 14 (a duplicate?), and an interesting entry of ID 13. What makes this quote different to all the other quotes is that it’s a quote quoting a quote. Eh? OK, it’s a Robert De Niro quote, but his quote is actually quoting Marlon Brando.
+
+Our updated CSV file looks like this
+
+
+Now to delete duplicates.
+
+Firstly, as the file is (intentionally) small we can see duplicates in the ID column. We can also see that ID 1 which appears twice, has the same movie name, same release year, rating and quote. Duplicate ID 14 has the same movie name, a different year and rating, but same quote.
+
+What to do? Let’s make the assumption that if the ID and Year columns are the same – it’s a duplicate, and delete one of them. And likewise, if the ID and Year columns are not the same, it stays. We’re going to create a new ID that merges ID and Year to do this in the second example.
+
+As per previous posts, we loop through the data file… but we create a different data structure; a hash of hashes (or rather a hash of hash references. Since hash keys must be unique – this will prove useful.
+
+A quick demonstration of what happens when the data is transformed into a hash of hashes.
+
+# Arnie_Nic.pl to parse Arnie_Nic.csv
+# checking for duplicates
+ 
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+use Data::Dump qw(pp);
+use feature 'say';
+use Carp;
+ 
+my $filename = 'Arnie_Nic.csv';
+ 
+open (my $fh,'<',$filename) or die $!;
+my $csv = Text::CSV->new( { sep_char   => q{,},
+                            quote_char => q{"}
+                          } );
+croak if Text::CSV->error_diag();
+ 
+#############################################
+# using getline_hr - build a hash of hashes #
+#############################################
+ 
+my $header = $csv->getline($fh);
+$csv->column_names( @{$header} );
+ 
+# create the hash of hashes
+ 
+my %hash;
+while ( my $inner_hash = $csv->getline_hr($fh) ) {
+ 
+  # using map
+ 
+  $hash{$inner_hash->{'ID'}} =
+    { map {$_ => $inner_hash->{$_} } keys %{$inner_hash} };
+}
+close $fh;
+$csv->eof or $csv->error_diag();
+say pp sort (\%hash);
+ 
+# how many keys (IDs) do we have
+say "There are ", scalar keys %hash , " IDs";
+exit;
+Lines 15 to 17 create the $csv object and declare the options. Lines 24 and 25 work in tandem to grab the header which in turn with line 30 starts a loop using getline_hr, using the column names as hash keys . Line 29 declares the hash (%hash) which will hold the data structure being created inside the while loop.
+
+There’s a bit happening on lines 34 to 36. We create an outer hash key by using the data in the ID and Year column for this, and map the inner hash (reference) to this outer key. We close the file on line 37, report any errors in doing this on line 38.
+
+We print the data structure – line 39. On line 42 we count the number of outer keys (IDs) and print the result.
+
+Note, there is only 1 entry for ID 1 – it takes the last ID 1 in the file. There’s also only one entry for ID 14 – again taking the last entry of this ID in the file. It also prints that there are 14 keys, which can’t be correct as we have 16 lines of data (header row is not included) in the file. But as mentioned – hash keys must be unique.
+
+Output shortened for output example
+
+{
+  1  => {
+          ID => 1,
+          Movie => "The Terminator",
+          Quotes => "I'll be back",
+          Rating => 5,
+          Year => 1984,
+        },
+  2  => {
+          ID => 2,
+          Movie => "Terminator 2: Judgement Day",
+          Quotes => "I need your clothes, your boots and your motorcycle",
+          Rating => 5,
+          Year => 1991,
+        },
+ ...
+  12 => {
+          ID => 12,
+          Movie => "Snake Eyes",
+          Quotes => "I saw you and you saw me, don't pretend like you don't know who I am girly man",
+          Rating => 3,
+          Year => 1998,
+        },
+  13 => {
+          ID => 13,
+          Movie => "Raging Bull",
+          Quotes => "\"I could've been a contender\"",
+          Rating => 5,
+          Year => 1980,
+        },
+  14 => {
+          ID => 14,
+          Movie => "Dracula",
+          Quotes => "I am Dracula",
+          Rating => 3,
+          Year => 1931,
+        },
+}
+There are 14 IDs
+However, it’s a a good start. We just need to tweak a few things. We want to keep both ID 14 entries from the CSV file. Let’s create a new ID, and assign (not using map) everything to that. Having done that, if the new ID still proves to be a duplicate, we’ll delete it. If not, it stays.
+
+Our new ID is the concatenated data from the ID and Year columns.
+
+# Arnie_Nic.pl to parse Arnie_Nic.csv
+# checking for duplicates
+ 
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+use Data::Dump qw(pp);
+use feature 'say';
+use Carp;
+ 
+my $filename = 'Arnie_Nic.csv';
+ 
+open (my $fh,'<',$filename) or die $!;
+my $csv = Text::CSV->new( { sep_char => q{,},
+                            quote_char => q{"}
+                          } );
+croak if Text::CSV->error_diag();
+ 
+#############################################
+# using getline_hr - build a hash of hashes #
+#############################################
+ 
+my $header = $csv->getline($fh);
+$csv->column_names( @{$header} );
+ 
+# create the hash of hashes
+ 
+my %hash;
+my %dups_deleted;
+while ( my $inner_hash = $csv->getline_hr($fh) ) {
+     
+    # create a new outer key ID
+    my $outer_key = join ( '-' , $inner_hash->{ID} , 
+                                 $inner_hash->{Year}
+                          );
+ 
+    # get the order correct...we're in a loop
+    # assign to %dups_deleted as the %hash is being built
+    # delete comes first
+    # duplicates based on new ID
+     
+    $dups_deleted{$outer_key} = delete $hash{$outer_key}
+    if ( exists $hash{$outer_key} ); 
+     
+    # not using map
+    # unique based on new ID
+    $hash{$outer_key} = $inner_hash;
+     
+     
+}
+close $fh;
+$csv->eof or $csv->error_diag();
+ 
+# how many keys (new IDs) do we have
+say "There are ", scalar keys %hash , " unique IDs";
+say "They are";
+say pp (\%hash);
+ 
+# how many keys (new IDs) do we have in the duplicates data
+say "There are ", scalar keys %dups_deleted , " IDs deleted from the main hash";
+say "They are";
+say pp (\%dups_deleted);
+exit;
+To outline the differences in this version, on line 30 we have an additional hash %dups _ deleted to hold any newly created ID that duplicate. We create this new ID (combination of ID and Year using a “-” symbol) on lines 34 to 36. This means that our IDs of 1 with the same year can be treated as a duplicate, and our IDs of 14 with a different year not considered duplicates.
+
+Lines 43 and 44 might seem confusing, not only in syntax but their position in the script before the main hash is created on line 48. Effectively lines 43 and 44 are stating that if the new ID has been seen before (i.e. if it already exists in %hash) the ID and its data are deleted from %hash and go into the %dups_deleted hash. Which means if it hasn’t been seen before (i.e. if it is unique) the data stays in %hash.
+
+If you put the code on line 48 before the codes on lines 43 and 44, %hash will be empty, and %dups_deleted will hold everything.
+
+Line 48 creates the hash that hasn’t been picked up and put in %dups_deleted. This line replaces the map function that was used in the previous example… just to prove there is more than one way to do it in Perl.
+
+Lines 56 to 63 determine how many keys are in each hash, and displays the results
+
+Contents of unique IDs shortened for output example
+
+There are 15 unique IDs
+They are
+{
+  "1-1984"  => {
+                 ID => 1,
+                 Movie => "The Terminator",
+                 Quotes => "I'll be back",
+                 Rating => 5,
+                 Year => 1984,
+               },
+...
+  "14-1931" => {
+                 ID => 14,
+                 Movie => "Dracula",
+                 Quotes => "I am Dracula",
+                 Rating => 3,
+                 Year => 1931,
+               },
+  "14-1958" => {
+                 ID => 14,
+                 Movie => "Dracula",
+                 Quotes => "I am Dracula",
+                 Rating => 4,
+                 Year => 1958,
+               },
+}
+We can see that %hash keeps one entry for ID 1 (updated as 1-1984), and keeps both entries for ID 14 with their new IDs of 14-1931 and 14-1958 as their updated ID means they are no longer duplicates.
+
+Contents of duplicate IDs
+
+There are 1 IDs deleted from the main hash
+They are
+{
+  "1-1984" => {
+    ID => 1,
+    Movie => "The Terminator",
+    Quotes => "I'll be back",
+    Rating => 5,
+    Year => 1984,
+  },
+}
+
+This makes sense. 16 lines of data can be explained. 15 newly created IDs (keys) are unique, and 1 (one of the 1-1984 IDs) is a duplicate, We chose a hash (or rather a hash of hash references) to achieve this exercise.
