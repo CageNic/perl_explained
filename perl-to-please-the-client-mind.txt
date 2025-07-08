@@ -1,0 +1,465 @@
+Perl to please the client mind
+Posted byalbert campbell16th Jul 2020Posted inCSV, Data, Movies, PerlTags:audit trail, client requirements, CSV, Data, data structures, Movies, Perl
+
+When is information too much information? Well, if you work with data, probably never. But, clients and research report writers often need summarised information ready and waiting for KPI and ROI purposes.
+
+In our previous post, we created this informative report of which quote contained the most words in ascending order.
+
+ID  Movie                          WordsinQuote
+15  Mary Poppins                   001
+1   The Terminator                 003
+9   Some randon film               003
+10  Another random film            003
+14  Dracula                        003
+3   Predator                       004
+11  Spinal Tap                     005
+13  Raging Bull                    005
+6   Con Air                        007
+2   Terminator 2: Judgement Day    009
+4   Kindergarten Cop               009
+8   Kick-Ass                       010
+7   Face/Off                       015
+12  Snake Eyes                     018
+5   Wild at Heart                  021
+16  The Great Dictator             643
+All well and good. They’re just movie quotes. But if the real data was survey research; for example – responses to a government consultation on a proposed plan – one of the key requirements is to determine a range of word counts the project responses generate.
+
+The client isn’t going to trawl through the list. Neither is a report writer. That’s the developer’s/analyst’s job.
+
+We’ll stick to movie quotes, but as always, the method can be applied to any textual data.
+
+We’ll classify our requirements as follows; a word range for 1 to 5 words, 6 to 10 words, 11 to 20 words, 21 – 100 words, 100 plus words. We also legislate for dirty data… things that might fall through the net. You wouldn’t expect a silent movie to have an entry – it would have no quote – we need to allow for this.
+
+So, here’s our CSV file. Note that entry for ID 17 has no quote.
+
+ID,Movie,Year,Rating,Quotes
+1,The Terminator,1984,5,"I'll be back"
+2,Terminator 2: Judgement Day,1991,5,"I need your clothes, your boots and your motorcycle"
+3,Predator,1987,4,"Get to the chopper!"
+4,Kindergarten Cop,1990,3,"I'm a cop, you idiot! I'm Detective John Kimble!"
+5,Wild at Heart,1990,5,"Did I ever tell ya that this here jacket represents a symbol of my individuality, and my belief in personal freedom?"
+6,Con Air,1997,4,"Put... the bunny... back... in the box."
+7,Face/Off,1997,1,"You'll be seeing a lot of changes around here. Papa's got a brand new bag."
+8,Kick-Ass,2010,4,"Tool up, honey bunny. It's time to get bad guys."
+9,Some randon film,2000,1,"Some random quote."
+10,Another random film,2001,1,"Another random quote."
+11,Spinal Tap,1984,5,"well,it's one louder, isn't it?"
+12,Snake Eyes,1998,3,"I saw you and you saw me, don't pretend like you don't know who I am girly man"
+13,Raging Bull,1980,5,"""I could've been a contender"""
+14,Dracula,1958,4,"I am Dracula"
+15,Mary Poppins,1964,4,"Supercalifragilisticexpialidocious"
+16,The Great Dictator,1940,5,"I’m sorry, but I don’t want to be an emperor. That’s not my business. I don’t want to rule or conquer anyone. I should like to help everyone - if possible - Jew, Gentile - black man - white. We all want to help one another. Human beings are like that. We want to live by each other’s happiness - not by each other’s misery. We don’t want to hate and despise one another. In this world there is room for everyone. And the good earth is rich and can provide for everyone. The way of life can be free and beautiful, but we have lost the way.Greed has poisoned men’s souls, has barricaded the world with hate, has goose-stepped us into misery and bloodshed. We have developed speed, but we have shut ourselves in. Machinery that gives abundance has left us in want. Our knowledge has made us cynical. Our cleverness, hard and unkind. We think too much and feel too little. More than machinery we need humanity. More than cleverness we need kindness and gentleness. Without these qualities, life will be violent and all will be lost. The aeroplane and the radio have brought us closer together. The very nature of these inventions cries out for the goodness in men - cries out for universal brotherhood - for the unity of us all. Even now my voice is reaching millions throughout the world - millions of despairing men, women, and little children - victims of a system that makes men torture and imprison innocent people. To those who can hear me, I say - do not despair. The misery that is now upon us is but the passing of greed - the bitterness of men who fear the way of human progress. The hate of men will pass, and dictators die, and the power they took from the people will return to the people. And so long as men die, liberty will never perish. Soldiers! don’t give yourselves to brutes - men who despise you - enslave you - who regiment your lives - tell you what to do - what to think and what to feel! Who drill you - diet you - treat you like cattle, use you as cannon fodder. Don’t give yourselves to these unnatural men - machine men with machine minds and machine hearts! You are not machines! You are not cattle! You are men! You have the love of humanity in your hearts! You don’t hate! Only the unloved hate - the unloved and the unnatural! Soldiers! Don’t fight for slavery! Fight for liberty! In the 17th Chapter of St Luke it is written: “the Kingdom of God is within man” - not one man nor a group of men, but in all men! In you! You, the people have the power - the power to create machines. The power to create happiness! You, the people, have the power to make this life free and beautiful, to make this life a wonderful adventure. Then - in the name of democracy - let us use that power - let us all unite. Let us fight for a new world - a decent world that will give men a chance to work - that will give youth a future and old age a security. By the promise of these things, brutes have risen to power. But they lie! They do not fulfil that promise. They never will! Dictators free themselves but they enslave the people! Now let us fight to fulfil that promise! Let us fight to free the world - to do away with national barriers - to do away with greed, with hate and intolerance. Let us fight for a world of reason, a world where science and progress will lead to all men’s happiness. Soldiers! in the name of democracy, let us all unite!"
+17,The General,1926,5,""
+We use this subroutine to do the grunt work. Embedding it in the if, elsif, else conditions makes for clearer reading.
+
+sub is_between {
+my ($quotecount,$min,$max) = @_;
+ return ($quotecount >= $min && $quotecount <= $max) ;
+}
+Let’s loop through the file and see if it works.
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+use Data::Dump qw(pp);
+use feature 'say';
+ 
+my $csv = Text::CSV->new(
+  {sep_char  => ',', binary => 1,
+   auto_diag =>  1, eol     => $\
+  }
+);
+ 
+# use the subroutine against if elsif else conditions
+# don't put the conditions in the sub
+# easier code to read with conditions outside subroutine
+ 
+sub is_between {
+my ($quotecount,$min,$max) = @_;
+ return ($quotecount >= $min && $quotecount <= $max) ;
+}
+ 
+my $file = 'Arnie_Nic.csv' ;
+open (my $fh,'<:encoding(utf8)',$file) or die "Cannot open file: $!";
+ 
+my @fields = @{ $csv->getline($fh) } ;
+ 
+while (my $row = $csv->getline($fh)) {
+  my %data ;
+  @data{@fields} = @{$row} ;
+  $data{Quotecount} = map { $data{Quotes} } split ( /\s+/,$data{Quotes} );
+   
+  if ( is_between($data{Quotecount},1,5) ) {
+    say "ID $data{ID}  1-5 words";
+    }
+    elsif ( is_between($data{Quotecount},6,10) ) {
+      say "ID $data{ID}  6-10 words";
+      }
+    elsif ( is_between($data{Quotecount},11,20) ) {
+      say "ID $data{ID}  11-20 words";
+      }
+    elsif ( is_between($data{Quotecount},21,100) ) {
+      say "ID $data{ID}  21-100 words";
+      }
+    elsif ( $data{Quotecount} > 100 ) {
+      say "ID $data{ID}  Greater than 100 words";
+      }
+      # capture silent movies that don't have quotes    
+      else {
+        say "ID $data{ID}  Can't apply words to range";
+      }
+}
+close $fh;
+Which produces…
+
+ID-1  1-5 words
+ID-2  6-10 words
+ID-3  1-5 words
+ID-4  6-10 words
+ID-5  21-100 words
+ID-6  6-10 words
+ID-7  11-20 words
+ID-8  6-10 words
+ID-9  1-5 words
+ID-10  1-5 words
+ID-11  1-5 words
+ID-12  11-20 words
+ID-13  1-5 words
+ID-14  1-5 words
+ID-15  1-5 words
+ID-16  Greater than 100 words
+ID-17  Can't apply words to range
+So far so good. Bit messy with the formatting spaces. But this is a temporary solution, so that’s unimportant. We’ll adjust the main body of the code as we want to incorporate the above data into something improved.
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+my $file = 'Arnie_Nic.csv' ;
+open (my $fh,'<:encoding(utf8)',$file) or die "Cannot open file: $!";
+ 
+my @fields = @{ $csv->getline($fh) } ;
+ 
+my @array;
+while (my $row = $csv->getline($fh)) {
+  my %data ;
+  @data{@fields} = @{$row} ;
+  $data{Quotecount} = map { $data{Quotes} } split ( /\s+/,$data{Quotes} );
+   
+  if ( is_between($data{Quotecount},1,5) ) {
+    $data{Range} = "1-5 words";
+    }
+    elsif ( is_between($data{Quotecount},6,10) ) {
+      $data{Range} = "6-10 words";
+      }
+    elsif ( is_between($data{Quotecount},11,20) ) {
+      $data{Range} = "11-20 words";
+      }
+    elsif ( is_between($data{Quotecount},21,100) ) {
+      $data{Range} = "21-100 words";
+      }
+    elsif ( $data{Quotecount} > 100 ) {
+      $data{Range} = "Greater than 100 words";
+      }
+      # capture silent movies that don't have quotes    
+      else {
+        $data{Range} = "Can't apply words to range";
+      }
+push (@array,\%data);
+}
+close $fh;
+say pp (\@array);
+We’ve now added $data{Range} to the %data hash, which in turn, gets pushed to @array (creating an array of hashes). Here’s a snippet of the output.
+
+[
+  {
+    ID         => 1,
+    Movie      => "The Terminator",
+    Quotecount => 3,
+    Quotes     => "I'll be back",
+    Range      => "1-5 words",
+    Rating     => 5,
+    Year       => 1984,
+  },
+  {
+    ID         => 2,
+    Movie      => "Terminator 2: Judgement Day",
+    Quotecount => 9,
+    Quotes     => "I need your clothes, your boots and your motorcycle",
+    Range      => "6-10 words",
+    Rating     => 5,
+    Year       => 1991,
+  },
+...
+  {
+    ID         => 17,
+    Movie      => "The General",
+    Quotecount => 0,
+    Quotes     => "",
+    Range      => "Can't apply words to range",
+    Rating     => 5,
+    Year       => 1926,
+  }
+]
+It’s important to note that all this might seem excessive, but we have the data we need to provide an audit trail, even though the eventual aim is to provide just one element of this data to the client. We have Quotes, Quotecount and Range all nicely embedded to prove our data is accurate and reliable. Remember the first paragraph… as the analyst, you can never have too much data. Even if you never present all of it, have it locked away at your disposal.
+
+Notice how the else condition has captured ID 17 as it is a silent film – and therefore no quote. This happens with real data even when you expect a response. People submit empty text boxes in the survey data world, even when they’re supposed to have an entry.
+
+So far, the above doesn’t clearly tell a client their word count ranges without having to read between the rest of the data. We need to provide them with a count for each occurrence of each word count range.
+
+We add this code.
+
+1
+my @count = map { $_->{Range} } @array;
+What has this done? Let’s print the contents of @count to check what it contains.
+
+1
+2
+3
+say join ("," , @count);
+ 
+1-5 words, 6-10 words, 1-5 words, 6-10 words, 21-100 words, 6-10 words, 11-20 words, 6-10 words, 1-5 words, 1-5 words, 1-5 words, 11-20 words, 1-5 words, 1-5 words, 1-5 words, Greater than 100 words, Can't apply words to range
+We have the values of $_->{Range} (from @array) in @count. We can treat these as hash keys and count their occurrence (which is the hash value) that increases if seen more than once in a loop.
+
+1
+2
+3
+4
+5
+my %counter;
+foreach (@count) {
+  $counter{$_}++;
+}
+say pp (\%counter);
+This gives us the desired output…
+
+{
+  "1-5 words" => 8,
+  "11-20 words" => 2,
+  "21-100 words" => 1,
+  "6-10 words" => 4,
+  "Can't apply words to range" => 1,
+  "Greater than 100 words" => 1,
+}
+Here’s the complete code
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+use Data::Dump qw(pp);
+use feature 'say';
+ 
+my $csv = Text::CSV->new(
+  {sep_char  => ',', binary => 1,
+   auto_diag =>  1, eol     => $\
+  }
+);
+ 
+# don't put the conditions in the sub
+# easier code to read with conditions outside subroutine
+ 
+sub is_between {
+my ($quotecount,$min,$max) = @_;
+ return ($quotecount >= $min && $quotecount <= $max) ;
+}
+ 
+my $file = 'Arnie_Nic.csv' ;
+open (my $fh,'<:encoding(utf8)',$file) or die "Cannot open file: $!";
+ 
+my @fields = @{ $csv->getline($fh) } ;
+ 
+my @array;
+while (my $row = $csv->getline($fh)) {
+  my %data ;
+  @data{@fields} = @{$row} ;
+  $data{Quotecount} = map { $data{Quotes} } split ( /\s+/,$data{Quotes} );
+   
+  if ( is_between($data{Quotecount},1,5) ) {
+    $data{Range} = "1-5 words";
+    }
+    elsif ( is_between($data{Quotecount},6,10) ) {
+      $data{Range} = "6-10 words";
+      }
+    elsif ( is_between($data{Quotecount},11,20) ) {
+      $data{Range} = "11-20 words";
+      }
+    elsif ( is_between($data{Quotecount},21,100) ) {
+      $data{Range} = "21-100 words";
+      }
+    elsif ( $data{Quotecount} > 100 ) {
+      $data{Range} = "Greater than 100 words";
+      }
+      # capture silent movies that don't have quotes    
+      else {
+        $data{Range} = "Can't apply words to range";
+      }
+push (@array,\%data);
+}
+close $fh;
+say pp (\@array);
+ 
+# sum the occurrences
+ 
+# create an array from the specific hash values of 'Range'
+my @count = map { $_->{Range} } @array;
+say join (", " , @count);
+ 
+ 
+my %counter;
+foreach (@count) {
+  $counter{$_}++;
+}
+say pp (\%counter);
