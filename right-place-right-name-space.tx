@@ -1,0 +1,132 @@
+#################################
+# Right Place Right Name::Space #
+#################################
+
+In order for a Perl script to find its required subroutine or subroutines in a build your own module, there are a few caveats to take into account. There are a number of modules that can replace the need to write ‘use lib’, and that’s fine. You could add any pathways that home grown modules reside in to the .~/.bashrc file (if on Unix / Linux), in order for them to be added to @INC, which is a collection of pathways that Perl searches for when a module is being imported via script execution. This is where modules shipped with the a specific version of Perl are kept, and those that are installed via CPAN.
+
+But for good old understanding of name spaces, the ‘use lib’ pragma is an option to write explicitly. And name spaces are simply a matter of knowing where your module and script reside in the directory structure. The syntax provided ensures they can communicate. Understand absolute directory pathways… understand name spaces.
+
+‘tree’ is your friend
+
+The ‘tree’ command can assist with a visual understanding. Here’s the output of a main directory and its sub directories.
+
+DataCage->tree
+.
+├── lib
+│   └── My
+│       └── ModuleDir
+│           └── Shortwave.pm
+├── Production
+│   └── Megahertz.pl
+└── t
+ 
+5 directories, 2 files
+                                                                                                                                                                                                                                                                                                                                      
+The 5 directories are… the lib directory with a further My directory, which in turn has a ModuleDir directory. Parallel to the lib directory are a Production directory and a t directory. The script ‘Megahertz.pl’ sits in the Production directory. The module ‘Shortwave.pm’ sits in My/ModuleDir directory . The ‘t’ directory is empty.
+
+The Shortwave.pm module contains a simple subroutine that the Megahertz.pl script needs. The user input of Megahertz.pl serves as the argument to the converter subroutine. These are the 2 files.
+
+Here’s the Shortwave.pm module.
+
+package My::ModuleDir::Shortwave;
+use Scalar::Util 'looks_like_number';
+ 
+our $VERSION = 0.01;
+ 
+use base 'Exporter';
+our @EXPORT_OK = qw(converter looks_like_number);
+our %EXPORT_TAGS = ( all => \@EXPORT_OK);
+ 
+sub converter {
+  my $DIVIDER = 299.792458;
+  my $number = shift;
+  my $new_number = ($DIVIDER / $number);
+  return $new_number;
+}
+Note that; package My::ModuleDir reflects the pathway that the tree structure displays. And ‘Shortwave’ represents the name of the module – Shortwave.pm. We haven’t given the full path from the main directory. In other words; we haven’t written package lib::My::ModuleDir::Shortwave.
+
+The reason for that is the; use lib ‘lib’ entry in Megahertz.pl, which effectively is giving the leading directory name (lib) where My/ModulreDir/Shortwave.pm follows. If the lib directory were called ‘BigDir’, then the entry in Megahertz.pl would be; use lib ‘BigDir’.
+
+Here’s the Megahertz.pl script
+
+###############################
+# convert Megahertz to Metres #
+###############################
+ 
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib 'lib';
+use My::ModuleDir::Shortwave ':all';
+use feature 'say';
+ 
+# get user input
+ 
+print 'Enter Megahertz: ';
+my $frequency = <STDIN>;
+chomp $frequency;
+ 
+# if the input is a true value and looks like a number
+ 
+if ( ($frequency ) && (looks_like_number($frequency)) ) {
+  say converter($frequency) ." Metres";
+   }
+   else {
+      say "Need a number - a real number";
+    }
+exit;
+As well as; use lib, we tell Megahertz.pl what module to use, or rather what module to import and what subroutine from that module to use. This is represented by; use My::ModuleDir::Shortwave ‘:all’; – the ‘:all’ representing all the subroutines from Shortwave.pm.
+
+
+There are, in fact, two subroutines to use from Shortwave.pm. That’s because in addition to the home made converter subroutine, the Scalar::Util module was declared in the Shortwave module rather than the Megahertz script. And it’s using the ‘looks_like_number’ subroutine from Scalar::Util. And because it was declared in the module, it in turn is imported into the script by means of; use My::ModuleDir::Shortwave ‘:all’.
+
+An intentional error to highlight Megahertz.pl cannot find Shortwave.pm
+
+We navigate to the directory where Megahertz.pl sits. We run it.
+
+DataCage->cd Production/
+DataCage->ls
+Megahertz.pl
+DataCage->perl Megahertz.pl
+                                                                                                                                                                                                                                                                                                                                      
+But things go awry…
+
+Can't locate My/ModuleDir/Shortwave.pm in @INC (you may need to install the My::ModuleDir::Shortwave module) (@INC contains: lib /etc/perl /usr/local/lib/perl/5.18.2 /usr/local/share/perl/5.18.2 /usr/lib/perl5 /usr/share/perl5 /usr/lib/perl/5.18 /usr/share/perl/5.18 /usr/local/lib/site_perl .) at Megahertz.pl line 9.
+BEGIN failed--compilation aborted at Megahertz.pl line 9.
+
+What went wrong? Well, there was no need to navigate to the directory of Megahertz.pl. In doing so, we’ve messed up the intended meaning of the ; use lib pragma. If we are in the Production folder (where Megahertz.pl resides) – we have to go up a level in order for the lib directory to be visible to Megahertz.pl – we’d have to change the syntax to; use lib ‘../lib’ in order for things to work.
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib '../lib';
+use My::ModuleDir::Shortwave ':all';
+use feature 'say';
+Probably not a good idea.
+
+“Stay off the moors. Stick to the road.”
+
+Some sound advice to avoid being attacked by a werewolf. But it also means that Megahertz.pl will run successfully if we don’t navigate off the main directory path, and we can see the lib, Production and t directory on the same level.
+
+.⇐ YOU ARE HERE
+├── lib
+│   └── My
+│       └── ModuleDir
+│           └── Shortwave.pm
+├── Production
+│   └── Megahertz.pl
+└── t
+
+We keep it as planned…
+
+use lib 'lib';
+And we execute by providing the full pathway of the main directory level – Production/Megahertz.pl.
+
+DataCage->ls
+lib  Production  t
+DataCage->perl Production/Megahertz.pl
+
+Which results in Megahertz.pl successfully importing lib/My/ModuleDir/Shortwave.pm – aka – package My::ModuleDir::Shortwave.
+
+Enter Megahertz: 9.68
+30.9702952479339 Metres
