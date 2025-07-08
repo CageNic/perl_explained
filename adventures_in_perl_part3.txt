@@ -2,12 +2,11 @@
 # Data duplication or not duplication… that is the question #
 #############################################################
 
-# note that the line references refer to the original publication on wordpress and so are not relevant in GitHub
+# note that the line references refer to the original publication on WordPress and so are not relevant in GitHub
 
 In parts 1 and 2 we looked at messy CSV data and how to identify it with Perl. We’ve been using a small CSV file so we can actually see its entire contents; the good, the bad, and the ugly lines – and how Perl can be used to flag inconsistencies.
 
 In this post we look at potential duplication. Our file has some additional lines since the previous two posts; all quoting is correct, no dodgy formatting, all hunky-dory in that respect. In this post, Nicolas Cage has joined Arnold Schwarzenegger as the King of Movie Quotes.
-
 
 In order to establish possible duplication, we need to decide what column to use. In this file it might seem obvious which column’s data is to be scrutinised for duplication. But what if there was a sixth column in this file that contained an IMDB ID? Surely that would be a “key” worthy of querying. Every IMDB key has to be unique right?
 
