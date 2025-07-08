@@ -1,0 +1,94 @@
+###############################
+# The CSV file – Trust No One #
+###############################
+
+# Note that the line numbers refer to the original publication on WordPress and are not relevant to GitHub
+
+That’s right. Do as Fox Mulder from The X-Files would do.
+
+When you are handed a CSV file, don’t trust it. I once merrily loaded sports data into a system taking it at face value, only to discover that an individual whose swim lap times could rival Michael Phelps was 100 years old. Alien DNA or dubious data?
+
+Taking our ‘Arnie.csv’ file from Adventures in Perl part 1, we’ve got a few more additional lines intentionally added to help with the exercise. Note on the last 3 lines the Quotes column… each phrase contains commas – but the quote is not encapsulated with quotes.
+
+
+What do we already know? Well, we want 5 columns; ID,Movie, Year, Rating and Quotes. We’ve learnt that by default, without any advanced understanding, unquoted text with a comma is likely to create additional, unwanted columns… as the comma is acting as the delimiter.
+
+We also know that missing quote characters on lines of data, can create concatenation – joining separate records together (see ID 2 and ID 3 in Adventures in Perl part 1). We flagged dodgy structured CSV data with Perl’s Text::CSV module (https://metacpan.org/pod/Text::CSV) and the parse feature.
+
+We left off by establishing that additional, unwanted columns can’t really be classified as dodgy structured CSV. It’s really the user’s job to know what is and what isn’t needed – and deal with it accordingly.
+
+The same can be said for the actual content of the data. What to do with it will depend on the project, clients’ requirements etc. Can it be ignored? If it’s clearly incorrect, should it be deleted? Should it be corrected?
+
+For example, we have a Year column which contains a 4 digit figure representing the release date of the movie. How would we ensure that all the data in this column didn’t contain anything but some sensible caveats? For example, if we assumed that movies have been made since the nineteenth, twentieth and twenty-first century, how could we flag anything that didn’t comply? How would we flag anything that doesn’t conform to 4 digits; i.e we don’t want any ’90, ’93 entries.
+
+And for the rating, if the lowest is 1, and the highest is 5, how can we flag any rating that doesn’t conform to this range?
+
+# Arnie.pl to parse Arnie.csv
+# checking for csv format errors
+  
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+use feature 'say';
+  
+my $csv = Text::CSV->new( {sep_char => q{,}, quote_char => q{"} } );
+my $file = 'Arnie.csv';
+  
+# we need an Arnie.csv file to continue
+open (my $fh,'<',$file) or die "Can't open file: $!";
+  
+# remove the header row
+# we don't want it included in if conditions
+  
+my $header = <$fh>;
+while (my $lines = <$fh>) {
+    chomp $lines;
+      
+    # deal with the lines that do parse OK
+    if ( $csv->parse($lines) ) {
+        my @arr = $csv->fields();
+        # don't bother with non-capturing in the parenthesis
+        # if the Year coloumn doesn't start with 18, 19 or 20
+          
+        if ( $arr[2] !~ /(^1[89]|20)\d\d/ ) {
+            say "ID $arr[0] $arr[1] has date $arr[2] which looks odd";
+            }
+              
+        my $rating = qr/[1-5]/; 
+        if ( $arr[3] !~ /$rating/ ) {
+                say "ID $arr[0] has wrong rating $arr[3]";
+            }
+        # check for spreadsheet import issues   
+        # if more than the allocated 5 columns
+        if ( scalar @arr > 5 ) {
+            # assign 6th to end column to a slice
+            my @slice = @arr[5 .. $#arr];
+            say '';
+            say "This entry creates a  spreadsheet split";
+            say "Quote is split over more than one column: " , @slice;
+            say $csv->string;
+            }
+        }
+        # the lines that don't parse OK
+            else {
+          warn "Problem parsing line $.  error ", $csv->error_diag();
+            }
+}
+close $fh;
+exit;
+
+Again, we’re not utilising Text::CSV too much. We’re taking some extreme liberties with line 29. As it stands, there’s nothing flagging a film being released in 1800, which would be too early. There’s also nothing that would flag a film released in any future date up to 2099.
+
+We have 3 embedded if conditions within the outer if condition (line 24), that flag Year (line 29), Rating (line 34) and potential unwanted columns (line 39). So if the line is parsed AND the condition of year is met – it’s flagged. The same pattern applies for parsing the line AND the rating, parsing the line AND checking columns after the Quotes column.
+
+This produces…
+
+
+Note that ID 9 has been flagged both on year and rating, as well as being flagged on data that appears after the Quotes column.
+
+ID 9 and ID 10 would seem to have data in columns after the Quotes column, that is superfluous to requirements, if we take “unwanted column” and “another unwanted column” as not being part of a movie quote.
+
+But, ID 11 looks as if it has a genuine movie quote which has created additional columns after the Quotes column – as it has commas and isn’t surrounded in quotes. This would span across columns in a spreadsheet rather than be grouped in our Quotes column.
+
+Again, all quite easy to spot and identify in such a small CSV file – we can tell just by looking at it. But, if this were a a larger CSV file and the task had to be repeated; flagging anomalies in this manner is invaluable.
