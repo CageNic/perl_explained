@@ -1,0 +1,233 @@
+#############################################################
+# Data duplication or not duplication… that is the question #
+#############################################################
+
+# note that the line references refer to the original publication on wordpress and so are not relevant in GitHub
+
+In parts 1 and 2 we looked at messy CSV data and how to identify it with Perl. We’ve been using a small CSV file so we can actually see its entire contents; the good, the bad, and the ugly lines – and how Perl can be used to flag inconsistencies.
+
+In this post we look at potential duplication. Our file has some additional lines since the previous two posts; all quoting is correct, no dodgy formatting, all hunky-dory in that respect. In this post, Nicolas Cage has joined Arnold Schwarzenegger as the King of Movie Quotes.
+
+
+In order to establish possible duplication, we need to decide what column to use. In this file it might seem obvious which column’s data is to be scrutinised for duplication. But what if there was a sixth column in this file that contained an IMDB ID? Surely that would be a “key” worthy of querying. Every IMDB key has to be unique right?
+
+We wouldn’t be so naive to consider that the Year column could be used as the column to check for duplication? Of course not – calculate how many films in each year, yes – but common sense tells us you can have many films made/released in the same year. The same principal applies to the Rating column.
+
+But, as you might have guessed, the ID column is the unique key to consider whether duplication has occurred, where each entry (aka record) is meant to have a unique numeric value.
+
+Here we utilise the Text::CSV module more than in parts 1 and 2 by using the getline, column_names and getline_hr features to use the header row rather than skipping it, and referring to column names rather than array indices. In doing this, we’re creating outer hash keys that hold arrays, which in turn have elements that are hash keys and values. This can be considered a hash of array of hashes. Strictly speaking, the inner hashes and arrays are references to the outer hash keys. Further reading links on this at the end of the post.
+
+This creates the data structure
+
+# Arnie_Nic.pl to parse Arnie_Nic.csv
+# checking for duplicates
+ 
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+use Data::Dump qw(pp);
+use feature 'say';
+ 
+my $csv = Text::CSV->new( {sep_char => q{,}, quote_char => q{"} } );
+my $file = 'Arnie_Nic.csv';
+ 
+# we need an Arnie_Nic.csv file to continue
+open (my $fh,'<',$file) or die "Can't open file: $!";
+ 
+######################################################
+# using getline_hr - build a hash of array of hashes #
+######################################################
+ 
+my %hash;
+ 
+# grab the header to use
+ 
+my $header = $csv->getline($fh); 
+$csv->column_names( @{$header} );
+ 
+while ( my $lines = $csv->getline_hr($fh) ) {
+    chomp $lines;
+     
+    # print columns if want to
+    # say "$lines->{ID} $lines->{Year} $lines->{Movie}";
+     
+    # create the data structure
+    push ( @{$hash{$lines->{ID}}} , {
+                                       'Year'   => $lines->{Year},
+                                       'Movie'  => $lines->{Movie},
+                                       'Rating' => $lines->{Rating},
+                                       'Quotes' => $lines->{Quotes}
+                                     } );
+}
+$csv->eof or $csv->error_diag();
+close $fh or die "Cannot close $file";
+say pp (\%hash);
+exit;
+
+Line 21 declares the intended outer structure as a hash. We need some keys that hold some values.
+
+Lines 25 and 26 work together to take the first line in the CSV file, and tell line 28 to use the column names as the hash keys.
+
+Line 32, which is commented out, emphasises that whilst in the while loop we can print the contents of the CSV file just as we did in parts 1 and 2. We can put an if condition here if we needed.
+
+Lines 35 – 41 are doing the grunt work. It’s instructing Perl to push the Year, Movie, Rating and Quotes data onto its corresponding ID as the data is being looped over.
+
+We close the while loop, and print the results with Data::Dump. It displays what is obvious with such a small file. ID 1 contains two array elements (which are hashes within the array). There’s matching data for all columns – clearly a duplicate
+
+ID 2 also contains two hashes as array elements… clearly not a duplicate. More than likely that given our movie Snake Eyes comes after ID 11 in the CSV file, the ID for this movie should be 12 and not 2.
+
+
+{
+  1  => [
+          {
+            Movie  => "The Terminator",
+            Quotes => "I'll be back",
+            Rating => 5,
+            Year   => 1984,
+          },
+          {
+            Movie  => "The Terminator",
+            Quotes => "I'll be back",
+            Rating => 5,
+            Year   => 1984,
+          },
+        ],
+  2  => [
+          {
+            Movie  => "Terminator 2: Judgement Day",
+            Quotes => "I need your clothes, your boots and your motorcycle",
+            Rating => 5,
+            Year   => 1991,
+          },
+          {
+            Movie  => "Snake Eyes",
+            Quotes => "I saw you and you saw me, don't pretend like you don't know who I am girly man",
+            Rating => 3,
+            Year   => 1998,
+          },
+        ],
+  3  => [
+          {
+            Movie  => "Predator",
+            Quotes => "Get to the chopper!",
+            Rating => 4,
+            Year   => 1987,
+          },
+        ],
+  4  => [
+          {
+            Movie  => "Kindergarten Cop",
+            Quotes => "I'm a cop, you idiot! I'm Detective John Kimble!",
+            Rating => 3,
+            Year   => 1990,
+          },
+        ],
+  5  => [
+          {
+            Movie  => "Wild at Heart",
+            Quotes => "Did I ever tell ya that this here jacket represents a symbol of my individuality, and my belief in personal freedom?",
+            Rating => 5,
+            Year   => 1990,
+          },
+        ],
+  6  => [
+          {
+            Movie  => "Con Air",
+            Quotes => "Put... the bunny... back... in the box.",
+            Rating => 4,
+            Year   => 1997,
+          },
+        ],
+  7  => [
+          {
+            Movie  => "Face/Off",
+            Quotes => "You'll be seeing a lot of changes around here. Papa's got a brand new bag.",
+            Rating => 1,
+            Year   => 1997,
+          },
+        ],
+  8  => [
+          {
+            Movie  => "Kick-Ass",
+            Quotes => "Tool up, honey bunny. It's time to get bad guys.",
+            Rating => 4,
+            Year   => 2010,
+          },
+        ],
+  9  => [
+          {
+            Movie  => "Some randon film",
+            Quotes => "Some random quote.",
+            Rating => 1,
+            Year   => 2000,
+          },
+        ],
+  10 => [
+          {
+            Movie  => "Another random film",
+            Quotes => "Another random quote.",
+            Rating => 1,
+            Year   => 2001,
+          },
+        ],
+  11 => [
+          {
+            Movie  => "Spinal Tap",
+            Quotes => "well,it's one louder, isn't it?",
+            Rating => 5,
+            Year   => 1984,
+          },
+        ],
+}
+
+This is all well and good – but to most the evidence is not very readable. We need to add something that makes the analysis easy to understand.
+
+$csv->eof or $csv->error_diag();
+close $fh or die "Cannot close $file";
+say pp (\%hash);
+ 
+# added lines under here...
+ 
+say "These IDs appear more than once...";
+# loop through outer hash keys (ID)
+foreach my $id ( keys %hash ) {
+     
+    # count how many elements in each array
+    # i.e. how many hashes in each array
+     
+    my $duplicate_check = scalar @{$hash{$id}};
+     
+    # get to the inner hash inside the array
+    foreach my $inner_arr ( @{$hash{$id}} ) {
+         
+        # print some stuff if array hash more than one
+        # hash in its array
+        say "ID $id $inner_arr->{Year} $inner_arr->{Movie}"
+        if $duplicate_check > 1;
+  }
+}
+exit;
+
+Line 7 is just to print a heading
+
+Line 9 we loop through the outer hash keys (aka the IDs from the CSV file)
+
+Line 14 assigns a count to the variable $duplicate_check. It calculates how many elements are in the array. And because the elements are hashes, it counts how many of these in each array per outer hash key (ID).
+
+Line 17 then loops over the arrays to get at the inner hashes.
+
+Line 21 prints these inner hashes – we choose to print ID which has already been assigned to $id from the first loop on line 9 – plus Year and Movie. But it prints this only if the value of $duplicate_check is greater than 1.
+
+This gives us the more understandable output…
+
+1
+2
+3
+4
+5
+These IDs appear more than once...
+ID 1 1984 The Terminator
+ID 1 1984 The Terminator
+ID 2 1991 Terminator 2: Judgement Day
+ID 2 1998 Snake Eyes
