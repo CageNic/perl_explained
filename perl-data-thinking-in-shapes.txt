@@ -1,0 +1,186 @@
+##################################
+# Perl Data – Thinking In Shapes #
+##################################
+
+Data structures can be regarded as shapes. Yes, these shapes have their respective language naming conventions. Hashes, dictionaries, arrays, lists, tuples etc. And when these shapes become nested… the names for them can sometimes become confusing.
+
+Structure is shape. Shape is visual. Visual teaches more clearly than spoken or written word.
+
+Here are some examples of creating shapes. How slight tweaks in the code can change the way data is displayed, and therefore the way information is presented and reported.
+
+We’ll use the __DATA__ filehandle with some fabricated data. If you want to test things with __DATA__, make sure it’s underneath everything else in the script.
+
+To explain…1st column a band name, second column an audio format, 3rd column, sales for that audio format
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Data::Dump qw(dd);
+ 
+my %hash;
+ 
+while (<DATA>) {
+ chomp;
+ my @array = split (/,/,$_) ;
+ $hash{$array[0]}->{band_count}++;
+ $hash{$array[0]}->{sales_count} += $array[2];
+}                                      
+dd(\%hash);
+ 
+__DATA__
+alice in chains,mp3,1000
+alice in chains,ogg,400
+nirvana,mp3,10000
+nirvana,flac,100
+soundgarden,mp3,1000
+soundgarden,wav,200
+pearl jam,CD,10000
+pearl jam,mp3,8000
+pearl jam,mp3,6000
+
+What are we doing? Line 8 reads in and loops over the data. Line 9 split the data (each line) on a comma from a string to an array. Line 11… assigns the 1st column as the outer hash key, which ensures that the 4 grunge bands will hold further data. But we’ve added (invented) an additional hash key – band_count and included ++ to it. So what’s going on with this; $hash{$array[0]}->{band_count}++; ? And this… $hash{$array[0]}->{sales_count} += $array[2]; ?
+
+Best explained with a visual.
+
+{
+  "alice in chains" => { band_count => 2, sales_count => 1400 },
+  "nirvana"         => { band_count => 2, sales_count => 10100 },
+  "pearl jam"       => { band_count => 3, sales_count => 24000 },
+  "soundgarden"     => { band_count => 2, sales_count => 1200 },
+}
+So this; $hash{$array[0]}->{band_count}++; has created “alice in chains”=> { band_count => 2.
+
+And this $hash{$array[0]}->{sales_count} += $array[2]; has created “alice in chains” => { … , sales_count => 1400 }, .
+
+The number of times the bands appear hash been counted (++) and is represented as the hash value of band_count. We see Pearl Jam appears 3 times. The number of sales per band hash been summed (+=) and appears as the value of sales_count.
+
+With that template in mind, we can tweak the code to produce different results and different data shapes. Not very relational, but worth an inclusion
+
+my %hash;
+ 
+while (<DATA>) {
+ chomp;
+ my @array = split (/,/,$_) ;
+ $hash{$array[1]}->{format_count}++;
+}                                      
+dd(\%hash);
+
+Which produces how many times each format appears – and nothing else.
+
+{
+  CD   => { format_count => 1 },
+  flac => { format_count => 1 },
+  mp3  => { format_count => 5 },
+  ogg  => { format_count => 1 },
+  wav  => { format_count => 1 },
+}
+And just as one-dimensional
+
+my %hash;
+ 
+while (<DATA>) {
+ chomp;
+ my @array = split (/,/,$_) ;
+ $hash{$array[0]}->{band_appearance}++;
+}                                      
+dd(\%hash);
+
+Which produces how many times each band appears – and nothing else.
+
+{
+  "alice in chains" => { band_appearance => 2 },
+  "nirvana"         => { band_appearance => 2 },
+  "pearl jam"       => { band_appearance => 3 },
+  "soundgarden"     => { band_appearance => 2 },
+}
+
+Let’s return to something a bit more meaningful.
+
+my %hash;
+ 
+while (<DATA>) {
+ chomp;
+ my @array = split (/,/,$_) ;
+ $hash{$array[0]}->{band_count}++;
+ $hash{$array[0]}->{sales_count} += $array[2];
+ $hash{$array[0]}->{format_count}++;
+}                                      
+dd(\%hash);
+
+Here, we’ve taken the first example we used and added $hash{$array[0]}->{format_count}++; to it in order to include a count of formats. Notice everything ties back to $hash{$array[0]} as our outer hash key.
+
+This produces
+{
+  "alice in chains" => { band_count => 2, format_count => 2, sales_count => 1400 },
+  "nirvana"         => { band_count => 2, format_count => 2, sales_count => 10100 },
+  "pearl jam"       => { band_count => 3, format_count => 3, sales_count => 24000 },
+  "soundgarden"     => { band_count => 2, format_count => 2, sales_count => 1200 },
+}
+
+But something’s not quite right here. We wanted our format_count to be specific to each audio format. Let’s change $hash{$array[0]}->{format_count}++; .
+
+We’ll experiment with 2 options. The 1st option we’ll add $hash{$array[0]}->{$array[1]}++; . Notice anything different about this? We’ve not invented a hash key name to hold the data. As a result, we’re not going to get a ‘format_count’ => { } in our data.
+
+my %hash;
+ 
+while (<DATA>) {
+ chomp;
+ my @array = split (/,/,$_) ;
+ $hash{$array[0]}->{band_count}++;
+ $hash{$array[0]}->{sales_count} += $array[2];
+ $hash{$array[0]}->{$array[1]}++;
+}                                      
+dd(\%hash);
+
+{
+  "alice in chains" => { band_count => 2, mp3 => 1, ogg => 1, sales_count => 1400 },
+  "nirvana"         => { band_count => 2, flac => 1, mp3 => 1, sales_count => 10100 },
+  "pearl jam"       => { band_count => 3, CD => 1, mp3 => 2, sales_count => 24000 },
+  "soundgarden"     => { band_count => 2, mp3 => 1, sales_count => 1200, wav => 1 },
+}
+
+See how the audio formats are different? Because we haven’t given a hash key name, the audio format itself (mp3 etc. ) is the key name – the audio format count (++) is the value.
+
+For the 2nd option, we’ll change that so the audio formats hold their own format_count key and value. But instead of this $hash{$array[0]}->{format_count}++; which we used previously, and only gave us an overall count of all formats, and not each format; we’ll change it to this $hash{$array[0]}->{$array[1]}->{format_count}++; .
+
+my %hash;
+ 
+while (<DATA>) {
+ chomp;
+ my @array = split (/,/,$_) ;
+ $hash{$array[0]}->{band_count}++;
+ $hash{$array[0]}->{sales_count} += $array[2];
+ $hash{$array[0]}->{$array[1]}->{format_count}++;
+}                                      
+dd(\%hash);
+
+Each of our audio formats are now inner keys and assigned to further format_count keys, where each one holds the count (value) for its respective format.
+
+{
+  "alice in chains" => {
+                         band_count => 2,
+                         mp3 => { format_count => 1 },
+                         ogg => { format_count => 1 },
+                         sales_count => 1400,
+                       },
+  "nirvana"         => {
+                         band_count => 2,
+                         flac => { format_count => 1 },
+                         mp3 => { format_count => 1 },
+                         sales_count => 10100,
+                       },
+  "pearl jam"       => {
+                         band_count => 3,
+                         CD => { format_count => 1 },
+                         mp3 => { format_count => 2 },
+                         sales_count => 24000,
+                       },
+  "soundgarden"     => {
+                         band_count => 2,
+                         mp3 => { format_count => 1 },
+                         sales_count => 1200,
+                         wav => { format_count => 1 },
+                       },
+}
+
+In this post, we’ve tweaked a line here and there, which has greatly altered the shape of the data. We’ve used the name of the band as the outer key – so everything is indexed to that. But, we could have used the 2nd column of audio format as our base to shape and produce data shapes and structures.
