@@ -1,0 +1,80 @@
+##########################################################################
+# The CSV file – quotes and terminators – does my spreadsheet look good? #
+##########################################################################
+
+# note that the original publication was in WordPress and so the line references are not relevant to GitHub
+
+There’s no getting away from the CSV file; readable in text editors and spreadsheets on Mac, Windows and Linux. Spreadsheets being the most popular method to read CSV files is hardly surprising. Open up Excel or LibreOffice Calc and we get tidy, formatted data.
+
+Let’s look at the contents of “Arnie.csv” in a spreadsheet; 5 columns – ID, Movie, Year, Rating, Quotes. Looks O.K. right?
+
+No, it doesn’t. It’s a complete mess. ID 2 data also contains all the data for ID 3. And we seem to have an extra, unwanted column with half the quote for ID 4. In other words – the quote has split in half.
+
+To understand the reason why the spreadsheet looks inaccurate, we look at “Arnie.csv” in a text editor. Any will suffice; even a non-fancy one such as Notepad on Windows. We also need to take into account that a comma “,” (traditionally) separates columns in a CSV file. So, this applies to the ID, Movie, Year, Rating, and Quotes columns.
+
+
+But the file’s appearance in the text editor looks nothing like how it appears in our spreadsheet data. Yes, it’s ugly. But we can clearly see that each film’s data is on a separate line. ID 2 and ID 3 are NOT concatenated on one line. If we go through the quotes it might give some insight to the behaviour of the spreadsheet.
+
+ID 1 – “I’ll be back”. Surrounded in double-quotes. Renders fine in the spreadsheet. Technically – it doesn’t need to be in quotes as there is no comma in the quote. More on this for ID 4.
+
+ID 2 – “I need your clothes, your boots and your motorcycle. We have a missing closing double-quote after motorcycle. If we then look at ID 3 – Get to the chopper” – we have a missing opening double-quote before Get.
+
+ID 4 – I’m a cop, you idiot! I’m Detective John Kimble! – no quotes at all. There’s a comma after I’m a cop and the quote continues; you idiot! I’m Detective John Kimble!
+
+Quotes are essential in CSV files when structuring data. Without them a comma that isn’t intended to separate columns will simply do the opposite and separate columns. This is why; you idiot! I’m Detective John Kimble! appears in an extra, unwanted column after the Quotes column. We have an unquoted comma in this Arnie speech that is not intended to act as a delimiter.
+
+Usually, when going the other way – having the original data in a spreadsheet, and saving it as CSV, the quoting of data is done for you, and the quote would appear as “I’m a cop, you idiot! I’m Detective John Kimble!” in the CSV file.
+
+A manual fix
+Since it’s only 4 lines of data (1st line is a header row), let’s manually adjust the CSV file and see if that makes a difference to the appearance in a spreadsheet.
+
+We’ve ensured each quote is surrounded with double-quotes. How has this affected the way the spreadsheet appears?
+
+That’s more like it. The spreadsheet looks good – everything is where it should be.
+
+A quick CSV parser
+But, there are only 4 lines of data. What if there were 40,000? It would be impossible to spot all poorly structured data. We couldn’t cross-reference every line in the spreadsheet and text editor in order to find anything that might need fixing.
+
+What’s needed is a tool to parse CSV. Something to report where the CSV data might not be formatted correctly. We’ll use Perl and the Text::CSV module (https://metacpan.org/pod/Text::CSV). This module has a whole bag of tricks, but for this post, we just want to write some Perl that will flag what it considers as dodgy CSV. For that we are using the ‘parse’ feature of the module.
+
+# Arnie.pl to parse Arnie.csv
+# checking for csv format errors
+ 
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Text::CSV;
+ 
+# allow for double-quotes...
+# at this stage we don't know if Quotes column has them
+ 
+my $csv = Text::CSV->new( {sep_char => q{,}, quote_char => q{"} } );
+my $file = 'Arnie.csv';
+ 
+# we need an Arnie.csv file to continue
+open (my $fh,'<',$file) or die "Can't open file: $!";
+while (my $line = <$fh>) {
+ 
+    # if not sounds more human than unless
+    if ( !$csv->parse($line) ) {
+        warn "Problem parsing line $.  error ", $csv->error_diag();
+        }
+}
+close $fh;
+exit;
+
+Line 7 tells the script we are using the Text::CSV module. Line 12 declares $csv as an object and which options are going to be used with it.
+
+Two things of note; you can name the object anything you want, it doesn’t have to be $csv. But this naming tends to be standard practise in the Perl world, so we’ll obey the rules. I’m declaring the delimiter (sep_char) as a comma on line 12. This may seem odd, when the module is called Text::CSV and we are working with a CSV file. But Text::CSV can be used for tab-delimited files, or any other delimiter; so it’s good practise to be verbose about things.
+
+Line 13 we declare the name of the CSV file we want to read. Line 16 we open up the file to read, and assign it to a file handle ($fh). If the file cannot be read, the script complains and doesn’t go any further. Much like $csv… you can call this file handle what you want (within reason). Don’t call it $out for example. That would suggest you are sending data out to a file from the script, rather than reading it into the script.
+
+Line 17 starts a loop, reading ‘Arnie.csv’ line-by-line. Line 20 reads as; “if this line of CSV data cannot be parsed”. Line 21 reads as “then complain about why it can’t be parsed, giving the line number, and the reason why you are complaining.”. We close the file for reading on line 24. We exit the script on line 25.
+
+And our output.
+
+Problem parsing line 3  error 2021EIQ - NL char inside quotes, binary off9035 at Arnie.pl line 21, <$fh> line 3.
+Problem parsing line 4  error 2034EIF - Loose unescaped quote3845 at Arnie.pl line 21, <$fh> line 4.
+We can see (much as we could manually) that there are quote issues with line 3 and line 4. (which is ID 2 and ID 3). If ‘Arnie.csv’ were a larger file, all potential errors would be flagged. An important note is… it has not flagged the split quote for ID 4. There is no error message about an extra column produced for I’m a cop you idiot…Technically, that is not dodgy CSV.
+
+There’s no getting away from having to fix your data if you want accurate results. We can cheat to a certain degree by allowing loose_quote options. Visit the Text::CSV CPAN page if you really want to venture into this potential nightmare (https://metacpan.org/pod/Text::CSV). But, if you send bad data in – you’ll get bad data out. So, best fix it if the data is intended for further reporting, charts, graphs etc.
