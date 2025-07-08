@@ -1,0 +1,142 @@
+#######################
+# Why you pushing me? #
+#######################
+
+A question John Rambo asked, and those pushing him faced the consequences.
+
+The push function in Perl isn’t as lethal as Rambo, and if you don’t use it, it won’t destroy your hometown. But there are instances when not using it could mess up your data.
+
+Getting away with it – not pushing
+
+Here’s a small file; 3 columns – an ID, band and lyric column.
+
+1|Bowie|"Oh baby just you shut your mouth"
+2|The Beatles|"and we are all together"
+3|The Rolling Stones|"cold Italian pizza"
+4|The Who|"the hypnotized never lie"
+
+And here’s something very simple to parse it into a data structure
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Data::Dump qw(pp);
+ 
+my %outerhash ;
+my $file = "lyrics.psv";
+open (my $fh,'<',$file) or die "Cannot open file: $!";
+while (my $lines = <$fh>) {
+  chomp $lines;
+  my ($ID,$band,$lyric) = split (/\|/,$lines);
+   
+  $outerhash{$ID} = {
+                     'band'  => $band,
+                     'lyric' => $lyric
+                  };
+} 
+close $fh;
+print pp(\%outerhash);
+Which produces
+
+{ 
+1 => {band => "Bowie",lyric => "\"and we kissed, as though nothing could fall\""},
+2 => { band => "The Beatles", lyric => "\"and we are all together\"" },
+3 => { band => "The Rolling Stones", lyric => "\"cold Italian pizza\"" },
+4 => { band => "The Who", lyric => "\"the hypnotized never lie\"" },
+}
+Nothing spectacular going on. A hash of hashes has been created.
+
+But our file has been updated – and Bowie appears twice, with the ID of 1.
+
+1|Bowie|"Oh baby just you shut your mouth"
+2|The Beatles|"and we are all together"
+3|The Rolling Stones|"cold Italian pizza"
+4|The Who|"the hypnotized never lie"
+1|Bowie|"and we kissed, as though nothing could fall"
+
+Carry On Regardless without using the push function
+
+We parse the data again just as we did previously. And we get our hash of hashes again.
+
+All hunky-dory (a clue in that for Bowie fans)?
+
+{
+  1 => {band  => "Bowie",lyric => "\"and we kissed, as though nothing could fall\""},
+  2 => { band => "The Beatles", lyric => "\"and we are all together\"" },
+  3 => { band => "The Rolling Stones", lyric => "\"cold Italian pizza\"" },
+  4 => { band => "The Who", lyric => "\"the hypnotized never lie\"" },
+}
+
+No, not really. What’s happened to our entry with the lyric to Bowie’s China Girl (“Oh baby just you shut your mouth”)? It’s not been included in our structure. Let’s try and fix that.
+
+Using push – but getting it wrong
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Data::Dump qw(pp);
+ 
+my %outerhash ;
+my $file = "lyrics.psv";
+open (my $fh,'<',$file) ;
+while (my $lines = <$fh>) {
+  chomp $lines;
+  my ($ID,$band,$lyric) = split (/\|/,$lines);
+  push ( $outerhash{$ID} , {
+                             'band'  => $band,
+                             'lyric' => $lyric
+                            } ); 
+} 
+close $fh;
+print pp(\%outerhash);
+
+If we run it – we get this error.
+
+1
+Not an ARRAY reference at lyrics2.pl line 12, <$fh> line 1.
+What’s happened? Well, as much as I appreciate that man pages and perldoc pages can be sparse and confusing in detail; if we run perldoc -f push on the command line, we get scant information. But there is a salient line…
+
+Treats ARRAY as a stack by appending the values of LIST to the
+               end of ARRAY.
+What we’ve done is to use the push function incorrectly. We’ve pushed a hash structure ( { ‘band’ => $band, ‘lyric’ => $lyric}) onto a hash key ($outerhash{$ID}).
+
+What we should have done is tweak the structure and push onto $ID, treating it as an array (or array reference) and not treating $ID as a hash key. We fix that with the below.
+
+Using push – getting it correct
+
+my %outerhash ;
+my $file = "lyrics.psv";
+open (my $fh,'<',$file) ;
+while (my $lines = <$fh>) {
+  chomp $lines;
+  my ($ID,$band,$lyric) = split (/\|/,$lines);
+  push ( @{$outerhash{$ID}} , {
+                             'band'  => $band,
+                             'lyric' => $lyric
+                            } ); 
+} 
+close $fh;
+print pp(\%outerhash);
+
+Which produces…
+
+{
+  1 => [
+         { band => "Bowie", lyric => "\"Oh baby just you shut your mouth\"" },
+         {
+           band  => "Bowie",
+           lyric => "\"and we kissed, as though nothing could fall\"",
+         },
+       ],
+  2 => [
+         { band => "The Beatles", lyric => "\"and we are all together\"" },
+       ],
+  3 => [
+         { band => "The Rolling Stones", lyric => "\"cold Italian pizza\"" },
+       ],
+  4 => [
+         { band => "The Who", lyric => "\"the hypnotized never lie\"" },
+       ],
+}
+
+And we can see that both Bowie entries are included as hashes within the same array.
