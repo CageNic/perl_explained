@@ -1,0 +1,110 @@
+Here’s a basic Perl web application using the Dancer framework with an SQLite database. It includes:
+
+A form with text boxes in the frontend
+
+A route to process form submission
+
+A SQLite database to store the data
+
+✅ 1. Prerequisites
+
+Install the required modules via CPAN or cpanminus:
+
+cpan Dancer Dancer::Plugin::Database DBI DBD::SQLite
+Or, if you use cpanm:
+
+cpanm Dancer Dancer::Plugin::Database DBI DBD::SQLite
+
+✅ 2. Directory Structure
+
+myapp/
+├── app.pl
+├── config.yml
+├── views/
+│   ├── index.tt
+│   └── layout.tt
+├── db/
+│   └── mydata.db
+
+✅ 3. app.pl (Main App)
+
+#!/usr/bin/env perl
+use Dancer;
+use Dancer::Plugin::Database;
+
+# Create table if it doesn't exist
+hook before => sub {
+    database->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    message TEXT
+)
+SQL
+};
+
+# Display form
+get '/' => sub {
+    template 'index';
+};
+
+# Handle form submission
+post '/submit' => sub {
+    my $name    = params->{'name'};
+    my $message = params->{'message'};
+
+    database->quick_insert('messages', {
+        name    => $name,
+        message => $message,
+    });
+
+    redirect '/';
+};
+
+start;
+
+✅ 4. config.yml
+
+plugins:
+  Database:
+    driver: 'SQLite'
+    database: 'db/mydata.db'
+    dbi_params:
+      RaiseError: 1
+      AutoCommit: 1
+
+✅ 5. views/index.tt (Form)
+
+<h1>Submit Message</h1>
+
+<form method="post" action="/submit">
+    <label>Name:</label>
+    <input type="text" name="name"><br><br>
+
+    <label>Message:</label>
+    <input type="text" name="message"><br><br>
+
+    <input type="submit" value="Submit">
+</form>
+
+✅ 6. views/layout.tt (Optional layout)
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dancer App</title>
+</head>
+<body>
+    [% content %]
+</body>
+</html>
+
+✅ 7. Run the App
+In the myapp/ directory, run:
+
+perl app.pl
+Then visit: http://localhost:3000
+
+✅ Result:
+You’ll see a simple form with Name and Message fields.
+On submission, data gets stored in db/mydata.db (SQLite).
