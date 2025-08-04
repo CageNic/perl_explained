@@ -1,0 +1,5 @@
+To check if a Perl module is installed
+perl -e "use LWP::Simple" on command line
+
+If installed - it returns nothing
+If not installed - it returns can't find in @INC
