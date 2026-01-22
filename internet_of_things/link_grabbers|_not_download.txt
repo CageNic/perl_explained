@@ -1,0 +1,140 @@
+
+##########################################################
+# see of this works as an alternative to KC mojo scripts #
+##########################################################
+
+# redirect this script to a file and then use wget to download the image links
+
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use WWW::Mechanize;
+use URI;
+
+# Starting URL
+my $start_url = 'http://www.example.com';
+
+# Create a mechanize object
+my $mech = WWW::Mechanize->new();
+
+# Hashes for de-duplication
+my %visited_pages;
+my %found_links;
+my %found_media;
+
+# Queue of pages to crawl
+my @queue = ($start_url);
+
+# >>> ADDED PRINT STATEMENT <<<
+print "Initial crawl queue:\n", join("\n", @queue), "\n";
+
+# Determine base domain for internal crawling
+my $base_uri = URI->new($start_url);
+my $base_host = $base_uri->host;
+
+while (@queue) {
+    my $url = shift @queue;
+
+    # Skip if already visited
+    next if $visited_pages{$url}++;
+
+    print "\n--- Crawling: $url\n";
+
+    # Attempt to fetch
+    eval { $mech->get($url); };
+    if ($@) {
+        warn "  Failed to fetch $url: $@\n";
+        next;
+    }
+
+    # Current page's URI context
+    my $page_uri = $mech->uri;
+
+    # Extract all <a> links
+    for my $link ($mech->links()) {
+        my $abs = URI->new_abs($link->url, $page_uri)->as_string;
+
+        $found_links{$abs}++;
+
+        if (URI->new($abs)->host eq $base_host) {
+            push @queue, $abs unless $visited_pages{$abs};
+        }
+    }
+
+    # Extract media URLs
+    for my $tag ($mech->find_all_tags()) {
+        my $type = $tag->tag;
+
+        if ($type eq 'img' && $tag->attr('src')) {
+            my $media_url = URI->new_abs($tag->attr('src'), $page_uri)->as_string;
+            $found_media{$media_url}++;
+        }
+
+        if ($type eq 'script' && $tag->attr('src')) {
+            my $media_url = URI->new_abs($tag->attr('src'), $page_uri)->as_string;
+            $found_media{$media_url}++;
+        }
+
+        if ($type eq 'link'
+            && lc($tag->attr('rel') // '') eq 'stylesheet'
+            && $tag->attr('href')) {
+
+            my $media_url = URI->new_abs($tag->attr('href'), $page_uri)->as_string;
+            $found_media{$media_url}++;
+        }
+    }
+}
+
+print "\n=== Found Page Links ===\n";
+print "$_\n" for sort keys %found_links;
+
+print "\n=== Found Media URLs ===\n";
+print "$_\n" for sort keys %found_media;
+
+
+##############################################################
+# script to work on for different urls that gets image links #
+##############################################################
+
+
+# useful for when you may have done lynx -dump 'address' > file.txt
+# and as well as the images that this might return, it also gives different sites that you can crawl
+# you could do a wget mirror to get everything, but this acts like wget spider in providing the links and not downloading
+
+No page iteration
+
+
+use strict;
+use warnings;
+use WWW::Mechanize;
+use URI;
+
+my $mech = WWW::Mechanize->new(
+    agent => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36",
+    autocheck => 1,
+);
+
+my @urls = ('address_1', 'address_2', 'address_3', 'address_4');
+
+my @images;
+
+for my $url (@urls) {
+    $mech->get($url);
+
+    # Base URI of the current page
+    my $base = $mech->uri;
+
+    # Find all <img> tags
+    for my $img ($mech->find_all_images) {
+        my $src = $img->url;
+
+        # Make absolute URL if needed
+        my $abs = URI->new_abs($src, $base)->as_string;
+
+        push @images, $abs;
+    }
+}
+
+# Print results
+print "$_\n" for @images;
