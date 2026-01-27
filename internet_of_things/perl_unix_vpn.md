@@ -26,8 +26,7 @@ Full tunnel (default, safest)
  - ALL traffic goes through VPN
 
 #### Split tunnel
- - Some traffic bypasses VPN
- - 
+ - Some traffic bypasses VPN   
 Often used for local LAN access
 On Linux, split tunneling is explicitly configured, not automatic  
 
