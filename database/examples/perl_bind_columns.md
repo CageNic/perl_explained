@@ -79,7 +79,7 @@ you can use fetchrow_array() or fetchrow_hashref() instead—but it offers clean
 It's most useful when dealing with many columns or in performance-critical code.
 
 #### Binding columns in Perl using bind_columns()
-#### more memory efficient because it avoids unnecessary data copying and reuses the same memory locations for each row retrieved from the database.
+more memory efficient because it avoids unnecessary data copying and reuses the same memory locations for each row retrieved from the database.
 
 #### What Happens Without bind_columns()  
 If you fetch rows using methods like:
