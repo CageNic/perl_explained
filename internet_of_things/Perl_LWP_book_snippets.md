@@ -148,22 +148,19 @@ That retrieves http://cpan.org/RECENT, which lists the past week's uploads in CP
 LWP::Simple also exports the head( ) function, which asks the server, "If I were to request this item with GET, what headers would it have?" This is useful when you are checking links. Although, not all servers support HEAD requests properly, if head( ) says the document is retrievable, then it almost definitely is. (However, if head( ) says it's not, that might just be because the server doesn't support HEAD requests.)
 
 The return value of head( ) depends on whether you call it in scalar context or list context. In scalar context, it is simply:
-
-```$is_success = head(url);  
 ```
-
+$is_success = head(url);  
+```
 If the server answers the HEAD request with a successful status code, this returns a true value. Otherwise, it returns a false value. You can use this like so:
-
-```die "I don't think I'll be able to get $url" unless head($url);  
-```  
-
+```
+die "I don't think I'll be able to get $url" unless head($url);  
+```
 Regrettably, however, some old servers, and most CGIs running on newer servers, do not understand HEAD requests. In that case, they should reply with a "405 Method Not Allowed" message, but some actually respond as if you had performed a GET request. With the minimal interface that head( ) provides, you can't really deal with either of those cases, because you can't get the status code on unsuccessful requests, nor can you get the content (which, in theory, there should never be any).
 
 In list context, head( ) returns a list of five values, if the request is successful:
-
-```(content_type, document_length, modified_time, expires, server) = head(url);  
+```
+(content_type, document_length, modified_time, expires, server) = head(url);  
 ```  
-
 The content_type value is the MIME type string of the form type/subtype; the most common MIME types are listed in Appendix C, "Common MIME Types". The document_length value is whatever is in the Content-Length header, which, if present, should be the number of bytes in the document that you would have gotten if you'd performed a GET request. The modified_time value is the contents of the Last-Modified header converted to a number like you would get from Perl's time( ) function. For normal files (GIFs, HTML files, etc.), the Last-Modified value is just the modification time of that file, but dynamically generated content will not typically have a Last-Modified header.
 
 The last two values are rarely useful; the expires value is a time (expressed as a number like you would get from Perl's time( ) function) from the seldom used Expires header, indicating when the data should no longer be considered valid. The server value is the contents of the Server header line that the server can send, to tell you what kind of software it's running. A typical value is Apache/1.3.22 (Unix).
@@ -171,7 +168,8 @@ The last two values are rarely useful; the expires value is a time (expressed as
 An unsuccessful request, in list context, returns an empty list. So when you're copying the return list into a bunch of scalars, they will each get assigned undef. Note also that you don't need to save all the values—you can save just the first few, as in Example 2-4.
 
 Example 2-4. Link checking with HEAD 
-```use strict;
+```
+use strict;
 use LWP::Simple;
 foreach my $url (
   'http://us.a1.yimg.com/us.yimg.com/i/ww/m5v9.gif',
@@ -203,7 +201,8 @@ foreach my $url (
 ```  
 Currently, that program prints the following, when run:
 
-```http://us.a1.yimg.com/us.yimg.com/i/ww/m5v9.gif
+```
+http://us.a1.yimg.com/us.yimg.com/i/ww/m5v9.gif
 That image/gif document is 5611 bytes long.
 It was modified 251207569 seconds ago; that's about 2907 days ago, at Thu Apr 14 18:00:00 1994!
 
@@ -860,6 +859,7 @@ my $cookie_jar = HTTP::Cookies::Netscape->new(
 $browser->cookie_jar($cookie_jar);
 ```
 With those five lines of code added, your LWP program's requests to the New York Times's server will carry the cookie that says that you're a registered user. So instead of giving your LWP program the "Log in!" page ad infinitum, the New York Times's server now merrily serves your program the news stories. Success!
+
 
 
 
