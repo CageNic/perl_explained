@@ -110,9 +110,9 @@ There are two problems with this. The first is that the document is now stored i
 
 The other problem is that a status code by itself isn't very useful: how do you know whether it was successful? That is, does the file contain a document? LWP::Simple offers the is_success( ) and is_error( ) functions to answer that question:
 
-```$successful = is_success(status);  
 ```
-```$failed     = is_error(status);  
+$successful = is_success(status);
+$failed     = is_error(status);  
 ```  
 If the status code status indicates a successful request (is in the 200-299 range), is_success( ) returns true. If status is an error (400-599), is_error( ) returns true. For example, this bit of code saves the BookTV (CSPAN2) listings schedule and emits a message if Gore Vidal is mentioned:
 
@@ -861,3 +861,4 @@ my $cookie_jar = HTTP::Cookies::Netscape->new(
 $browser->cookie_jar($cookie_jar);
 ```
 With those five lines of code added, your LWP program's requests to the New York Times's server will carry the cookie that says that you're a registered user. So instead of giving your LWP program the "Log in!" page ad infinitum, the New York Times's server now merrily serves your program the news stories. Success!
+
