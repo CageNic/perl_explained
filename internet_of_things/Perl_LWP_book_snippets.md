@@ -136,10 +136,9 @@ close(IN);
 
 2.3.3. Fetch and Print
 LWP::Simple also exports the getprint( ) function:
-
-```$status = getprint(url);  
 ```
-
+$status = getprint(url);  
+```
 The document is printed to the currently selected output filehandle (usually STDOUT). In other respects, it behaves like getstore( ). This can be very handy in one-liners such as:
 
 % perl -MLWP::Simple -e "getprint('http://cpan.org/RECENT')||die" | grep Apache
@@ -861,5 +860,6 @@ my $cookie_jar = HTTP::Cookies::Netscape->new(
 $browser->cookie_jar($cookie_jar);
 ```
 With those five lines of code added, your LWP program's requests to the New York Times's server will carry the cookie that says that you're a registered user. So instead of giving your LWP program the "Log in!" page ad infinitum, the New York Times's server now merrily serves your program the news stories. Success!
+
 
 
