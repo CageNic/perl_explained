@@ -54,7 +54,7 @@ Sorry, the object you requested was not found.
 
 [and then the server closes the connection]  
 
-2.2.1. Request
+#### 2.2.1. Request
 An HTTP request has three parts: the request line, the headers, and the body of the request (normally used to pass form parameters).
 
 The request line says what the client wants to do (the method), what it wants to do it to (the path), and what protocol it's speaking. Although the HTTP standard defines several methods, the most common are GET and POST. The path is part of the URL being requested (in Example 2-1 the path is /daily/2001/01/05/1.html). The protocol version is generally HTTP/1.1.
@@ -861,4 +861,5 @@ my $cookie_jar = HTTP::Cookies::Netscape->new(
 $browser->cookie_jar($cookie_jar);
 ```
 With those five lines of code added, your LWP program's requests to the New York Times's server will carry the cookie that says that you're a registered user. So instead of giving your LWP program the "Log in!" page ad infinitum, the New York Times's server now merrily serves your program the news stories. Success!
+
 
