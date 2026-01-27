@@ -256,7 +256,7 @@ open my $fh, ">:encoding(utf8)", "output.csv"
 # Optional: print header row
 $csv->print($fh, [qw(col1 col2 col3 col4)]);
 
-# 1️Begin transaction & declare cursor
+# Begin transaction & declare cursor
 $dbh->do("BEGIN");
 $dbh->do("DECLARE mycursor CURSOR FOR SELECT col1, col2, col3, col4 FROM big_table");
 
@@ -293,39 +293,31 @@ open my $fh, "| gzip > output.csv.gz" or die $!;
 ```
 For extremely large exports, you could also use PostgreSQL’s native COPY TO STDOUT — even faster, though less flexible for custom logic.
 
-🚀 TL;DR
-Task	Best Practice
-Large table read	Use cursor (DECLARE ... FETCH)
-Memory efficiency	Use bind_columns()
-Output	Stream to file directly
-PostgreSQL setting	AutoCommit => 0 (transactions on)
-Extra	Optionally compress output (gzip)
-Would you like me to show the PostgreSQL COPY TO STDOUT approach next?
-It’s even faster than DBI cursors if you’re purely exporting data (no per-row logic).
+#### TL;DR
+Task	            Best Practice  
+Large table read	Use cursor (DECLARE ... FETCH)  
+Memory efficiency	Use bind_columns()  
+Output	            Stream to file directly  
+PostgreSQL setting	AutoCommit => 0 (transactions on)  
+Extra	            Optionally compress output (gzip)  
 
-You said:
-yes
-ChatGPT said:
-Excellent — let’s now go one level deeper: using PostgreSQL’s native COPY TO STDOUT command.
+#### PostgreSQL’s native COPY TO STDOUT command  
 
-This is the fastest and most memory-efficient way to export query results to a file in Perl, often 10–50× faster than fetching rows via a cursor — because the database server streams raw text directly to your Perl process, bypassing DBI row handling entirely.
+This is the fastest and most memory-efficient way to export query results to a file in Perl, often 10–50× faster than fetching rows via a cursor  
+because the database server streams raw text directly to your Perl process, bypassing DBI row handling entirely  
 
-🧩 How it works
-PostgreSQL executes your query server-side.
+#### How it works
+PostgreSQL executes your query server-side  
+Instead of transferring results row-by-row through DBI’s normal fetch mechanism, it streams the raw output over the wire  
+Perl reads that stream incrementally and writes it directly to a file (or pipe, or compressor)  
 
-Instead of transferring results row-by-row through DBI’s normal fetch mechanism, it streams the raw output over the wire.
+This means:  
+Virtually zero memory use (constant RAM footprint)  
+Maximum throughput (no Perl-level data copying)
+for large exports (tens/hundreds of GB)  
 
-Your Perl script reads that stream incrementally and writes it directly to a file (or pipe, or compressor).
-
-This means:
-
-Virtually zero memory use (constant RAM footprint).
-
-Maximum throughput (no Perl-level data copying).
-
-Ideal for large exports (tens/hundreds of GB).
-
-✅ Example: Stream query to CSV using COPY TO STDOUT
+Example: Stream query to CSV using COPY TO STDOUT
+```
 use strict;
 use warnings;
 use DBI;
@@ -369,69 +361,53 @@ $copy_sth->finish;
 $dbh->disconnect;
 
 print "Export complete: output.csv\n";
-⚙️ Explanation
-Step	Function
-COPY (SELECT ...) TO STDOUT	PostgreSQL streams query results
-pg_getcopydata	Reads the next chunk of data from the stream
-print $fh $line	Writes directly to disk — no buffering
-No Perl-level row handling	Near-constant memory usage
-WITH CSV HEADER	Adds a header row automatically
-🔥 Performance Notes
-Fastest possible method for exporting query results in Perl.
+```
+#### Explanation
+Step	                    Function
+COPY (SELECT ...) TO STDOUT	PostgreSQL streams query results  
+pg_getcopydata	            Reads the next chunk of data from the stream  
+print $fh $line	            Writes directly to disk — no buffering  
+No Perl-level row handling	Near-constant memory usage  
+WITH CSV HEADER	            Adds a header row automatically  
 
-pg_getcopydata returns data in chunks (usually several KBs), which you can write immediately.
+#### Performance Notes 
+Fastest possible method for exporting query results in Perl  
+pg_getcopydata returns data in chunks (usually several KBs), which you can write immediately  
+Since PostgreSQL does the CSV serialization internally, you avoid overhead of Text::CSV or manual formatting  
 
-Since PostgreSQL does the CSV serialization internally, you avoid overhead of Text::CSV or manual formatting.
-
-💾 Optional: Gzip compression on the fly
+#### Optional: Gzip compression on the fly
 You can stream directly to a compressed file without touching disk twice:
-
+```
 open my $fh, "| gzip > output.csv.gz" or die "Cannot open gzip pipe: $!";
+```
 Then use the same copy loop — PostgreSQL streams → Perl → gzip → file.
 
-🧠 When to use this vs. cursors
-Use case	Recommended method
-Need to process each row in Perl (transform, filter, join, compute)	Cursor + bind_columns()
-Just exporting to a file	COPY TO STDOUT (fastest, simplest)
-Want CSV with headers	COPY ... WITH CSV HEADER
-Want TSV	COPY ... WITH (FORMAT text, DELIMITER E'\t')
-🧪 Example for TSV export
+#### When to use this vs. cursors
+Use case	                       Recommended method
+Need to process each row in Perl   (transform, filter, join, compute)	Cursor + bind_columns()  
+Just exporting to a file	       COPY TO STDOUT (fastest, simplest)  
+Want CSV with headers	           COPY ... WITH CSV HEADER  
+Want TSV	                       COPY ... WITH (FORMAT text, DELIMITER E'\t')  
+
+#### Example for TSV export
+```
 my $query = q{
     COPY (
         SELECT id, name, created_at
         FROM users
     ) TO STDOUT WITH (FORMAT text, DELIMITER E'\t', NULL '\N')
 };
-✅ Summary
+```
+#### Streaming PostgreSQL query results directly into another process or network destination without ever writing an intermediate file.
 
-Feature	Cursor + bind_columns	COPY TO STDOUT
-Memory use	Very low	Minimal (lowest possible)
-Speed	Good	Excellent
-Custom per-row logic	✅ Yes	❌ No (bulk only)
-CSV formatting	You	PostgreSQL does it
-Use case	Data processing	Fast export / backup
-Would you like me to show a version that uses COPY TO STDOUT directly into a Perl data stream (e.g., piping it into another process or network socket)?
-That’s great for ETL pipelines or parallel data ingestion.
+This technique lets you build ultra–memory-efficient ETL or data pipelines purely in Perl  
 
-You said:
-yes
-ChatGPT said:
-Perfect — now you’re thinking like a data engineer 👏
+pipe the data stream directly into... another command (e.g., gzip, aws s3 cp, psql, etc.)  
+A socket or network stream (e.g., for real-time ingestion)  
+Any Perl filehandle that accepts a write stream  
 
-Let’s take the final step: streaming PostgreSQL query results directly into another process or network destination — without ever writing an intermediate file.
-
-This technique lets you build ultra–memory-efficient ETL or data pipelines purely in Perl.
-
-🧩 Concept
-We’ll still use PostgreSQL’s COPY TO STDOUT, but instead of writing to disk, we’ll pipe the data stream directly into:
-
-Another command (e.g., gzip, aws s3 cp, psql, etc.)
-
-A socket or network stream (e.g., for real-time ingestion)
-
-Any Perl filehandle that accepts a write stream
-
-✅ Example 1: Stream query → gzip → S3 upload
+#### Example 1: Stream query → gzip → S3 upload
+```
 use strict;
 use warnings;
 use DBI;
@@ -474,16 +450,19 @@ $sth->finish;
 $dbh->disconnect;
 
 print "✅ Streamed directly to S3 via gzip\n";
-🧠 How it works
-Step	Description
-COPY ... TO STDOUT	PostgreSQL streams data in chunks
-$dbh->pg_getcopydata	Reads the next data block (binary safe)
-print $out $chunk	Sends to any filehandle (pipe, socket, etc.)
-`gzip	aws s3 cp - ...`
-Constant memory	Perl never buffers or stores the dataset
-⚙️ Example 2: Stream to another process (e.g. load into another DB)
-You can even pipe between two databases efficiently:
+```
+#### How it works
+Step	                Description  
+COPY ... TO STDOUT	    PostgreSQL streams data in chunks  
+$dbh->pg_getcopydata	Reads the next data block (binary safe)  
+print $out $chunk	    Sends to any filehandle (pipe, socket, etc.)  
+`gzip	aws s3 cp - ...`  
+Constant memory	Perl never buffers or stores the dataset    
 
+#### Example 2: Stream to another process (e.g. load into another DB)  
+
+You can even pipe between two databases efficiently:
+```
 open my $pipe, "| psql -h dest-host -U dest_user -d dest_db -c \"COPY new_table FROM STDIN WITH CSV HEADER\"" 
     or die "Cannot open pipe to psql: $!";
 
@@ -506,9 +485,11 @@ $sth->finish;
 $dbh->disconnect;
 
 print "✅ Streamed directly from one Postgres DB to another\n";
-That’s a zero-intermediate Postgres→Postgres transfer — no temp files, no buffering, minimal latency.
+```
+That’s a zero-intermediate Postgres→Postgres transfer — no temp files, no buffering, minimal latency  
 
-⚙️ Example 3: Stream to a TCP socket (real-time ingestion)
+#### Example 3 Stream to a TCP socket (real-time ingestion)
+```
 use IO::Socket::INET;
 
 # Connect to a TCP server (e.g. ETL collector)
@@ -535,7 +516,7 @@ $sth->finish;
 $dbh->disconnect;
 
 print "✅ Streamed to ETL server over TCP\n";
-
+```
 
 #### step-by-step guide to bind columns in Perl using SQLite
 #### specifically using the DBI module, which is the standard database interface module in Perl 
