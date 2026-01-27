@@ -18,34 +18,33 @@ A VPN can leak your real IP if DNS is not routed properly.
  - Ensure DNS servers:
 
 Are provided by VPN
+Or are secure (e.g. 10.x.x.x, 100.x.x.x)  
+Good VPNs push DNS automatically  
 
-Or are secure (e.g. 10.x.x.x, 100.x.x.x)
-
-📌 Good VPNs push DNS automatically.
-
-6️⃣ Split Tunneling vs Full Tunneling
+#### Split Tunneling vs Full Tunneling
 Full tunnel (default, safest)
-ALL traffic goes through VPN
+ - ALL traffic goes through VPN
 
-Split tunnel
-Some traffic bypasses VPN
-
+#### Split tunnel
+ - Some traffic bypasses VPN
+ - 
 Often used for local LAN access
+On Linux, split tunneling is explicitly configured, not automatic  
 
-On Linux, split tunneling is explicitly configured, not automatic.
-
-7️⃣ How to Verify Everything Is Covered
-Browser
-Visit:
-
-https://ipleak.net
-Terminal
+#### How to Verify Everything Is Covered
+- Browser  
+ - Visit: https://ipleak.net  
+- Terminal
+```
 curl ifconfig.me
-Perl
+```
+- Perl
+```
 use IO::Socket::INET;
 print IO::Socket::INET->new(
     PeerAddr => 'ifconfig.me',
     PeerPort => 80,
     Proto    => 'tcp'
 )->peerhost;
+``` 
 All three should report the same VPN IP.
