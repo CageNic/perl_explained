@@ -1,24 +1,21 @@
 #### What Happens to Perl & Unix Tools when using a VPN  
+
 Example Perl code:
-
+```
 use LWP::UserAgent;
-
 my $ua = LWP::UserAgent->new;
 print $ua->get('https://ifconfig.me')->decoded_content;
-If VPN is active:
+```
+If VPN is active:  
+ - The request exits via VPN IP    
+ - Same as browser traffic  
+ - No proxy settings needed  
 
-The request exits via VPN IP
-
-Same as browser traffic
-
-No proxy settings needed.
-
-5️⃣ DNS Matters (Very Important)
+#### DNS Matters  
 A VPN can leak your real IP if DNS is not routed properly.
-
-What to check
-resolvectl status
-Ensure DNS servers:
+ - What to check
+ - resolvectl status
+ - Ensure DNS servers:
 
 Are provided by VPN
 
