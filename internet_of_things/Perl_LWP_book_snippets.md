@@ -5,8 +5,8 @@
 There are three parameters in that query string: name, with the value "Hiram Veeblefeetzer" (the space has been encoded); age, with the value 35; and country, with the value "Madagascar".
 
 The URI::Escape module provides the uri_escape( ) function to help you build URLs:
-
-```use URI::Escape;
+```
+use URI::Escape;
 encoded_string = uri_escape(raw_string);
 For example, to build the name, age, and country query string:
 
@@ -24,12 +24,13 @@ HTTP is a server/client protocol: the server has the file, and the client wants 
 
 Example 2-1 contains a sample request from a client.
 
-Example 2-1. An HTTP request 
+Example 2-1. An HTTP request
+```
 GET /daily/2001/01/05/1.html HTTP/1.1
 Host: www.suck.com
 User-Agent: Super Duper Browser 14.6
 [blank line]  
-
+```  
 A successful response is given in Example 2-2.
 
 Example 2-2. A successful HTTP response 
@@ -859,6 +860,7 @@ my $cookie_jar = HTTP::Cookies::Netscape->new(
 $browser->cookie_jar($cookie_jar);
 ```
 With those five lines of code added, your LWP program's requests to the New York Times's server will carry the cookie that says that you're a registered user. So instead of giving your LWP program the "Log in!" page ad infinitum, the New York Times's server now merrily serves your program the news stories. Success!
+
 
 
 
