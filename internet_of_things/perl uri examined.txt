@@ -1,0 +1,318 @@
+#####################
+# perl uri examined #
+#####################
+
+#######################
+# Simple search query #
+#######################
+
+use URI;
+
+my $uri = URI->new('https://example.com/search');
+
+$uri->query_param( q    => 'perl uri' );
+$uri->query_param( page => 2 );
+$uri->query_param( sort => 'date' );
+
+print $uri;
+
+# q is the Search query — what the user typed into a search box
+# page is pagination — show the second page of results
+# sort - on date - order results by newest first
+
+https://example.com/search?q=perl+uri&page=2&sort=date
+
+# URI automatically:
+# inserts ? before the first parameter
+# inserts & between parameters
+# encodes spaces as +
+
+##########################################################################
+# Multiple values for the same key (checkboxes / tags) using query_param #
+##########################################################################
+
+use URI;
+
+my $uri = URI->new('https://example.com/items');
+
+$uri->query_param( tag => 'perl' );
+$uri->query_param( tag => 'web' );
+$uri->query_param( tag => 'backend' );
+
+print $uri;
+
+# tag - perl, web, backend - User selected multiple tags (e.g. checkboxes)
+
+https://example.com/items?tag=perl&tag=web&tag=backend
+
+# this matches how HTML forms submit multiple checkboxes with the same name
+
+#########################################################################
+# Multiple values for the same key (checkboxes / tags) using query_form #
+#########################################################################
+
+use URI;
+
+my $uri = URI->new('https://example.com/items');
+
+$uri->query_form(
+    tag => [ 'perl', 'web', 'backend' ],
+);
+
+print $uri;
+
+###################################
+# Bulk assignment with query_form #
+###################################
+
+# query_form replaces the entire query string
+
+use URI;
+
+my $uri = URI->new('https://example.com/login');
+
+$uri->query_form(
+    user     => 'alice',
+    token    => 'abc123',
+    remember => 1,
+);
+
+print $uri;
+
+# user	Username being authenticated
+# token	Session or CSRF token
+# remember	“Remember me” checkbox (1 = enabled)
+
+############################################
+# Bulk assignment with query_form and hash #
+############################################
+
+# Hashes don’t preserve order, so the parameter order may vary.
+
+use URI;
+
+my %params = (
+    q    => 'perl uri',
+    page => 3,
+    lang => 'en',
+);
+
+my $uri = URI->new('https://example.com/search');
+$uri->query_form(%params);
+
+print $uri;
+
+# q	Search phrase
+# page	Page number
+# lang	Language preference
+
+################################
+# fetch pages with query_param #
+################################
+
+# base URI (no page yet)
+
+use URI;
+
+my $base_uri = URI->new('https://example.com/search');
+$base_uri->query_param( q => 'perl' );
+
+Step 2: Loop over pages, mutate per request
+for my $page (1..5) {
+    my $uri = $base_uri->clone;   # important!
+    $uri->query_param( page => $page );
+
+    print "Fetching: $uri\n";
+
+    # fetch($uri);  # LWP, HTTP::Tiny, etc.
+}
+
+Printed output
+Fetching: https://example.com/search?q=perl&page=1
+Fetching: https://example.com/search?q=perl&page=2
+Fetching: https://example.com/search?q=perl&page=3
+Fetching: https://example.com/search?q=perl&page=4
+Fetching: https://example.com/search?q=perl&page=5
+
+# Why clone matters (subtle but important)
+# Without clone:
+
+$base_uri->query_param( page => $page );
+
+# You would overwrite the same URI repeatedly, which might be fine — but cloning ensures:
+# no accidental accumulation
+# clean separation per request
+# safer if you add more params later
+
+#################
+# from LWP book #
+#################
+
+5.2.2. GETting a query_form( ) URL
+The tidiest way to submit GET form data is to make a new URI object, then add in the form pairs using the query_form method, before performing a $browser->get($url) request:
+
+$url->query_form(name => value, name => value, ...);
+For example:
+
+use URI;
+my $url = URI->new( 'http://www.census.gov/cgi-bin/gazetteer' );
+my($city,$state,$zip) = ("Some City","Some State","Some Zip");
+$url->query_form(
+  # All form pairs:
+  'city'  => $city,
+  'state' => $state,
+  'zip'   => $zip,
+);
+
+print $url, "\n"; # so we can see it
+Prints:
+
+http://www.census.gov/cgi-bin/gazetteer?city=Some+City&state=Some+State&zip=Some+Zip
+
+From this, it's easy to write a small program (shown in Example 5-1) to perform a request on this URL and use some simple regexps to extract the data from the HTML.
+
+Example 5-1. gazetteer.pl
+
+#!/usr/bin/perl -w
+# gazetteer.pl - query the US Cenus Gazetteer database
+
+use strict;
+use URI;
+use LWP::UserAgent;
+
+die "Usage: $0 \"That Town\"\n" unless @ARGV == 1;
+my $name = $ARGV[0];
+my $url = URI->new('http://www.census.gov/cgi-bin/gazetteer');
+$url->query_form( 'city' => $name, 'state' => '', 'zip' => '');
+print $url, "\n";
+
+my $response = LWP::UserAgent->new->get( $url );
+die "Error: ", $response->status_line unless $response->is_success;
+extract_and_sort($response->content);
+
+sub extract_and_sort {  # A simple data extractor routine
+  die "No <ul>...</ul> in content" unless $_[0] =~ m{<ul>(.*?)</ul>}s;
+  my @pop_and_town;
+  foreach my $entry (split /<li>/, $1) {
+    next unless $entry =~ m{^<strong>(.*?)</strong>(.*?)<br>}s;
+    my $town = "$1 $2";
+    next unless $entry =~ m{^Population \(.*?\): (\d+)<br>}m;
+    push @pop_and_town, sprintf "%10s %s\n", $1, $town;
+  }
+  print reverse sort @pop_and_town;
+}
+Then run it from a prompt:
+
+% perl gazetteer.pl Dulce
+http://www.census.gov/cgi-bin/gazetteer?city=Dulce&state=&zip=
+      2438 Dulce, NM  (cdp)
+       794 Agua Dulce, TX  (city)
+       136 Guayabo Dulce Barrio, PR  (county subdivision)
+% perl gazetteer.pl IEG
+
+http://www.census.gov/cgi-bin/gazetteer?city=IEG&state=&zip=
+   2498016 San Diego County, CA  (county)
+   1886748 San Diego Division, CA  (county subdivision)
+   1110549 San Diego, CA  (city)
+     67229 Boca Ciega Division, FL  (county subdivision)
+      6977 Rancho San Diego, CA  (cdp)
+      6874 San Diego Country Estates, CA  (cdp)
+      5018 San Diego Division, TX  (county subdivision)
+      4983 San Diego, TX  (city)
+      1110 Diego Herna]Ndez Barrio, PR  (county subdivision)
+       912 Riegelsville, PA  (county subdivision)
+       912 Riegelsville, PA  (borough)
+       298 New Riegel, OH  (village)
+Cookies
+HTTP was originally designed as a stateless protocol, meaning that each request is totally independent of other requests. But web site designers felt the need for something to help them identify the user of a particular session. The mechanism that does this is called a cookie. This section gives some background on cookies so you know what LWP is doing for you.
+
+An HTTP cookie is a string that an HTTP server can send to a client, which the client is supposed to put in the headers of any future requests that it makes to that server. Suppose a client makes a request to a given server, and the response headers consist of this:
+
+Date: Thu, 28 Feb 2002 04:29:13 GMT
+Server: Apache/1.3.23 (Win32)
+Content-Type: text/html
+Set-Cookie: foo=bar; expires=Thu, 20 May 2010 01:23:45 GMT; path=/
+This means that the server wants all further requests from this client to anywhere on this site (i.e., under /) to be accompanied by this header line:
+
+Cookie: foo=bar That header should be present in all this browser's requests to this site, until May 20, 2010 (at 1:23:45 in the morning), after which time the client should never send that cookie again.
+
+A Set-Cookie line can fail to specify an expiration time, in which case this cookie ends at the end of this "session," where "session" is generally seen as ending when the user closes all browser windows. Moreover, the path can be something more specific than /. It can be, for example, /dahut/, in which case a cookie will be sent only for URLs that begin http://thishost/dahut/. Finally, a cookie can specify that this site is not just on this one host, but also on all other hosts in this subdomain, so that if this host is search.mybazouki.com, cookies should be sent to any hostname under mybazouki.com, including images.mybazouki.com, ads.mybazouki.com, extra.stuff.mybazouki.com, and so on.
+
+All those details are handled by LWP, and you need only make a few decisions for a given LWP::UserAgent object:
+
+Should it implement cookies at all? If not, it will just ignore any Set-Cookie: headers from the server and will never send any Cookie: headers.
+
+Should it load cookies when it starts up? If not, it will start out with no cookies.
+
+Should it save cookies to some file when the browser object is destroyed? If not, whatever cookies it has accumulated will be lost.
+
+What format should the cookies file be in? Currently the choices are either a format particular to LWP, or Netscape cookies files.
+
+11.1.1. Enabling Cookies
+By default, an LWP::UserAgent object doesn't implement cookies. To make an LWP::UserAgent object that implements cookies is as simple as this:
+
+my $browser = LWP::UserAgent->new( );
+$browser->cookie_jar( {} );
+However, that browser object's cookie jar (as we call its HTTP cookie database) will start out empty, and its contents won't be saved anywhere when the object is destroyed. Incidentally, the above code is a convenient shortcut for what one previously had to do:
+
+Load LWP class for "cookie jar" objects
+use HTTP::Cookies;
+my $browser = LWP::UserAgent->new( );
+my $cookie_jar = HTTP::Cookies->new( );
+$browser->cookie_jar( $cookie_jar );
+There's not much point to using the long form when you could use the short form instead, but the longer form becomes preferable when you're adding options to the cookie jar.
+
+11.1.2. Loading Cookies from a File
+To start the cookie jar by loading from a particular file, use the file option to the HTTP::Cookies new method:
+
+use HTTP::Cookies;
+my $cookie_jar = HTTP::Cookies->new(
+   file     => "/some/where/cookies.lwp",
+);
+my $browser = LWP::UserAgent->new;
+$browser->cookie_jar( $cookie_jar );
+In that case, the file is read when the cookie jar is created, but it's never updated with any new cookies that the $browser object will have accumulated.
+
+To read the cookies from a Netscape cookies file instead of from an LWP-format cookie file, use a different class, HTTP::Cookies::Netscape, which is just like HTTP::Cookies, except for the format that it reads and writes:
+
+use HTTP::Cookies::Netscape;
+my $cookie_jar = HTTP::Cookies::Netscape->new(
+   file => "c:/program files/netscape/users/shazbot/cookies.txt",
+);
+my $browser = LWP::UserAgent->new;
+$browser->cookie_jar( $cookie_jar );
+11.1.3. Saving Cookies to a File
+To make LWP write out its potentially changed cookie jar to a file when the object is no longer in use, add an autosave => 1 parameter:
+
+use HTTP::Cookies;
+my $cookie_jar = HTTP::Cookies->new(
+   file     => "/some/where/cookies.lwp",
+   autosave => 1,
+);
+my $browser = LWP::UserAgent->new;
+$browser->cookie_jar( $cookie_jar );
+At time of this writing, using autosave => 1 with HTTP::Cookies::Netscape has not been sufficiently tested and is not recommended.
+
+11.1.4. Cookies and the New York Times Site
+Suppose that you have felt personally emboldened and empowered by all the previous chapters' examples of pulling data off of news sites, especially the examples of simplifying HTML in Chapter 10, "Modifying HTML with Trees". You decide that a great test of your skill would be to write LWP code that downloads the stories off various newspapers' web sites and saves them all in a format (either plain text, highly simplified HTML, or even WML, if you have an html2wml tool around) that your ancient but trusty 2001-era PDA can read. Thus, you can spend your commute time on the train (or bus, tube, el, metro, jitney, T, etc.) merrily flipping through the day's news stories from papers all over the world.
+
+Suppose also that you have the basic HTML-simplifying code in place (so we shall not discuss it further), and the LWP code that downloads stories from all the newspapers is working fine—except for the New York Times site. And you can't imagine why it's not working! You have a simple HTML::TokeParser program that gets the main page, finds all the URLs to stories in it, and downloads them one at a time. You verify that those routines are working fine. But when you look at the files that it claims to be successfully fetching and saving ($response->is_success returns true and everything!), all you see for each one is a page that says "Welcome to the New York Times on the Web! Already a member? Log in!" When you look at the exact same URL in Netscape, you don't see that page at all, but instead you see the news story that you want your LWP program to be accessing.
+
+Then it hits you: years ago, the first time you accessed the New York Times site, it wanted you to register with an email address and a password. But you haven't seen that screen again, because of... HTTP cookies! You riffle through your Netscape HTTP cookies file, and lo, there you find:
+
+.ny times.com TRUE / FALSE 1343279235 RMID 809ac0ad1cff9a6b
+Whatever this means to the New York Times site, it's apparently what differentiates your copy of Netscape when it's accessing a story URL, from your LWP program when it's accessing that URL.
+
+Now, you could simply hardwire that cookie into the headers of the $browser->get( ) request's headers, but that involves recalling exactly how lines in Netscape cookie databases translate into headers in HTTP request. The optimally lazy solution is to simply enable cookie support in this LWP::UserAgent object and have it read your Netscape cookie database. So just after where you started off the program with this:
+
+use LWP;
+my $browser = LWP::UserAgent->new( );
+Add `this:
+
+use HTTP::Cookies::Netscape;
+my $cookie_jar = HTTP::Cookies::Netscape->new(
+ 'file' => 'c:/program files/netscape/users/me/cookies.txt'
+);
+
+$browser->cookie_jar($cookie_jar);
+With those five lines of code added, your LWP program's requests to the New York Times's server will carry the cookie that says that you're a registered user. So instead of giving your LWP program the "Log in!" page ad infinitum, the New York Times's server now merrily serves your program the news stories. Success!
