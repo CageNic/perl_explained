@@ -136,7 +136,7 @@ sub find_associated_paragraph {
 
     return undef;
 }
-
+```
 
 #### Example Output  
 Mapped Paragraphs and Images:    
@@ -258,9 +258,9 @@ Description: [No description found]
 
 #### Context Overview
 We are scraping a WordPress blog page for:
-- <img> elements (images)
-- <p> elements (paragraphs)
-- alt attributes (image description)
+- ```<img>``` elements (images)
+- ```<p>``` elements (paragraphs)
+- ```alt``` attributes (image description)
 - optional: parent-child or sibling relationships
 
 #### Tag and Attribute Hierarchy  
@@ -281,20 +281,19 @@ div class="post">
 </div>
 ```  
 #### Tags & Attributes Explained  
----------------------------------------------------------------------------------------------------------
-Tag             Attribute	Type	Description
----------------------------------------------------------------------------------------------------------
-<div>           Container       General container element. Used for grouping content
-<p>             Block	        Paragraph of text. Might describe an image if nearby
-<img>	        Inline	        Embeds an image. Core to the scraping
-src (in <img>)	Attribute	The image URL (source). Used to identify the image file
-alt (in <img>)	Attribute	Alternative text for the image. Often used as a caption or description
-<figure>	Semantic	HTML5 container for media (images/videos) and captions
-<figcaption>	Semantic	Describes the content of a <figure> (i.e., the image)
-parent	        Conceptual	Refers to the element that contains another (e.g., <div> containing <img>)
-left, right	Conceptual	DOM siblings to the left or right of the current element  
----------------------------------------------------------------------------------------------------------
-
+------------------------------------------------------------------------------------------------------------------
+Tag                   Attribute	Type	Description
+------------------------------------------------------------------------------------------------------------------
+```<div>```           Container         General container element. Used for grouping content
+```<p>```             Block	            Paragraph of text. Might describe an image if nearby
+```<img>```	          Inline	        Embeds an image. Core to the scraping
+```src (in <img>)```  Attribute	        The image URL (source). Used to identify the image file
+```alt (in <img>)```  Attribute	        Alternative text for the image. Often used as a caption or description
+```<figure>```	      Semantic	        HTML5 container for media (images/videos) and captions
+```<figcaption>```	  Semantic	        Describes the content of a <figure> (i.e., the image)
+```parent```	      Conceptual	    Refers to the element that contains another (e.g., <div> containing <img>)
+```left, right```	  Conceptual	    DOM siblings to the left or right of the current element  
+------------------------------------------------------------------------------------------------------------------  
 #### Typical WordPress DOM Structure for a Post  
 Here’s a real-world-style example of how images and text are commonly structured in WordPress:
 ```
@@ -307,16 +306,15 @@ Here’s a real-world-style example of how images and text are commonly structur
   <p>Fluffy loves this spot near the window.</p>
 </article>
 ```
-
 #### DOM Relationships Summary  
------------------------------------------------
+---------------------------------------------------------------------------------------------
 Relationship	     Description
------------------------------------------------
-Parent → Child	     <div> contains <img>, <p>, etc.
-Sibling              (left/right) Paragraph immediately before or after an image
-Attribute	     alt attribute of <img> as primary image description
-Semantic containers  <figure> and <figcaption> as grouped media with descriptions
-
+---------------------------------------------------------------------------------------------
+Parent → Child	     ```<div>``` contains ```<img>```, ```<p>```, etc.
+Sibling              (```left/right```) Paragraph immediately before or after an image      
+Attribute	         alt attribute of ```<img>``` as primary image description
+Semantic containers  ```<figure>``` and ```<figcaption>``` as grouped media with descriptions
+---------------------------------------------------------------------------------------------  
 #### Print a structured template (like a data hash) for each image, showing:
 - src (image URL)
 - alt
