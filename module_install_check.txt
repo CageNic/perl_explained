@@ -3,3 +3,35 @@ perl -e "use LWP::Simple" on command line
 
 If installed - it returns nothing
 If not installed - it returns can't find in @INC
+
+######
+# or #
+######
+
+ find $(perl -e 'print join(" ", @INC)') -name '*.pm' | grep -i 'pattern'
+
+/usr/share/perl5/vendor_perl/HTTP/CookieJar/LWP.pm
+/usr/share/perl5/vendor_perl/LWP/Authen/Basic.pm
+/usr/share/perl5/vendor_perl/LWP/Authen/Digest.pm
+/usr/share/perl5/vendor_perl/LWP/Authen/Ntlm.pm
+/usr/share/perl5/vendor_perl/LWP/ConnCache.pm
+/usr/share/perl5/vendor_perl/LWP/Debug/TraceHTTP.pm
+/usr/share/perl5/vendor_perl/LWP/Debug.pm
+/usr/share/perl5/vendor_perl/LWP/DebugFile.pm
+/usr/share/perl5/vendor_perl/LWP/MediaTypes.pm
+/usr/share/perl5/vendor_perl/LWP/MemberMixin.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/cpan.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/data.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/file.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/ftp.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/gopher.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/http.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/loopback.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/mailto.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/nntp.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol/nogo.pm
+/usr/share/perl5/vendor_perl/LWP/Protocol.pm
+/usr/share/perl5/vendor_perl/LWP/RobotUA.pm
+/usr/share/perl5/vendor_perl/LWP/Simple.pm
+/usr/share/perl5/vendor_perl/LWP/UserAgent.pm
+/usr/share/perl5/vendor_perl/LWP.pm
