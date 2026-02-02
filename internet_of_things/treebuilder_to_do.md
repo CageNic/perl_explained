@@ -1,7 +1,7 @@
 #### Perl script that uses the HTML::TreeBuilder module to scrape a site and extract:
 
-- Paragraphs (<p> elements)
-- Image URLs (<img> tags)
+- Paragraphs (```<p>``` elements)
+- Image URLs (```<img>``` tags)
 ```
 #!/usr/bin/perl
 use strict;
@@ -149,7 +149,7 @@ Description: [No nearby paragraph found]
 
 #### how this works
 - It looks for paragraphs right before or after the <img> tag in the DOM
-- If not found, it checks if both are inside the same parent (e.g. a <div> or <figure>)
+- If not found, it checks if both are inside the same parent (e.g. a ```<div>``` or ```<figure>```)
 - It filters out empty paragraphs (just whitespace)
 
 Would you like to improve this further with smarter matching (e.g. using image alt attributes, or using machine learning to check text relevance)?
