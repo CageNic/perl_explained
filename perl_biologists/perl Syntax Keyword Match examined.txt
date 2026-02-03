@@ -1,0 +1,102 @@
+###################################
+# Syntax::Keyword::Match examined #
+###################################
+
+###################
+# Number matching #
+###################
+
+use v5.14;
+use warnings;
+
+use Syntax::Keyword::Match;
+
+my $n = 4;
+
+match($n : ==) {
+   case(1) { say "It's one" }
+   case(2) { say "It's two" }
+   case(3) { say "It's three" }
+   case(4),
+   case(5) {
+    say "It's four or five"
+   }
+   default { say "It's something else" }
+}
+Output:
+It's four or five
+
+##################################################################################
+# Compared to current Perl, it is shorter and can be written without duplication #
+##################################################################################
+
+use v5.14;
+use warnings;
+
+my $n = 4;
+
+if ($n == 1) {
+  say "It's one";
+}
+elsif ($n == 2) {
+  say "It's two";
+}
+elsif ($n == 3) {
+  say "It's three";
+}
+elsif ($n == 4 || $n == 5) {
+  say "It's four or five";
+}
+else {
+  say "It's something else";
+}
+
+# For integers, performance optimization may also be possible using a jump table or a binary tree.
+
+###################
+# String matching #
+###################
+
+use v5.14;
+use warnings;
+
+use Syntax::Keyword::Match;
+
+my $n = 'a4';
+
+match($n : eq) {
+   case('a1') { say "It's one" }
+   case('a2') { say "It's two" }
+   case('a3') { say "It's three" }
+   case('a4'),
+   case('a5') {
+    say "It's four or five"
+   }
+   default { say "It's something else" }
+}
+Output:
+It's four or five
+
+##################
+# Regex matching #
+##################
+
+use v5.14;
+use warnings;
+
+use Syntax::Keyword::Match;
+
+my $n = 'a4bbbb';
+
+match($n : =~) {
+   case(/a1/) { say "It's one" }
+   case(/a2/) { say "It's two" }
+   case(/a3/) { say "It's three" }
+   case(/a4/),
+   case(/a5/) {
+    say "It's four or five"
+   }
+   default { say "It's something else" }
+}
+Output:
+It's four or five

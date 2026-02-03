@@ -1,0 +1,28 @@
+############################
+# perl defined or operator #
+############################
+
+// defined-or operator
+This is an easy win from Perl v5.10:
+
+defined $foo ? $foo : $bar  # replace this
+$foo // $bar                # with this
+And:
+
+$foo = $bar unless defined $foo  # replace this
+$foo //= $bar                    # with this
+Perfect for assigning defaults to variables.
+
+####################################
+# Perl more readable dereferencing #
+####################################
+
+Perl v5.20 introduced and v5.24 de-experimentalized
+a more readable postfix dereferencing syntax
+for navigating nested data structures
+Instead of using {braces} or smooshing sigils to the left of identifiers
+you can use a postfixed sigil-and-star:
+
+push @$array_ref,    1, 2, 3;  # noisy
+push @{$array_ref},  1, 2, 3;  # a little easier
+push $array_ref->@*, 1, 2, 3;  # read from left to right

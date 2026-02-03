@@ -1,0 +1,18 @@
+###########################################
+# Perl qr regex formed in a hash examined #
+###########################################
+
+
+
+Using qr// Inside a Hash
+
+Useful in dispatch tables:
+
+my %patterns = (
+    number => qr/^\d+$/,
+    word   => qr/^\w+$/
+);
+
+if ("12345" =~ $patterns{number}) {
+    print "It's a number!\n";
+}

@@ -1,0 +1,136 @@
+###################################################################################
+# push a hashref to an array examined; scalar unpacking version and slice version #
+###################################################################################
+
+########################################################
+# example without header row - example with header row #
+########################################################
+
+# Example Input File (data.txt):
+
+John,Doe,30
+Jane,Smith,25
+Bob,Johnson,40
+
+# Perl Script Using Scalar Unpacking:
+
+use strict;
+use warnings;
+
+my @people;
+
+open my $fh, '<', 'data.txt' or die "Cannot open file: $!";
+
+while (my $line = <$fh>) {
+    chomp $line;
+    
+    # Scalar unpacking from split
+    my ($first_name, $last_name, $age) = split /,/, $line;
+
+    # Create a hashref and push to array
+    push @people, {
+        first_name => $first_name,
+        last_name  => $last_name,
+        age        => $age,
+    };
+}
+
+close $fh;
+
+# Optional: print for verification
+use Data::Dumper;
+print Dumper \@people;
+
+##################
+# what This Does #
+##################
+
+# Uses split to directly unpack into scalars (efficient).
+
+# Avoids intermediate array like @fields, which saves a tiny bit of memory and CPU.
+
+# Constructs a hash reference ({}) using those scalar values.
+
+# Collects all hashrefs in an array (@people), giving you an array of structured records.
+
+###############################
+# When Is This Pattern Ideal? #
+###############################
+
+# When the number and order of fields is known and consistent.
+
+# When performance and memory efficiency matter (e.g., large files).
+
+# When you want clean, readable code without unnecessary intermediate steps.
+
+#####################################################
+# Optional Enhancement: Field Names from Header Row #
+#####################################################
+
+If your file includes a header row (like CSV with column names), you can read that line first, split it, and then use it to build hashes dynamically. Let me know if you'd like that version too.
+
+
+# Example Input File (data_with_header.txt)
+
+first_name,last_name,age
+John,Doe,30
+Jane,Smith,25
+Bob,Johnson,40
+
+use strict;
+use warnings;
+
+my @people;
+
+open my $fh, '<', 'data_with_header.txt' or die "Cannot open file: $!";
+
+# Read the header line and get field names
+chomp(my $header_line = <$fh>);
+my @fields = split /,/, $header_line;
+
+while (my $line = <$fh>) {
+    chomp $line;
+
+    # Split the line into values
+    my @values = split /,/, $line;
+
+    # Build a hashref using the header fields as keys
+    my %record;
+    @record{@fields} = @values;
+
+    push @people, \%record;
+}
+
+close $fh;
+
+# Optional: print for verification
+use Data::Dumper;
+print Dumper \@people;
+
+# Explanation
+
+# @record{@fields} = @values;
+
+# This is Perl's hash slice assignment — it assigns each value in @values to the corresponding key from @fields. 
+
+# It's: Clean, Dynamic, Scales to any number of columns, Avoids manual unpacking
+
+# Output (via Data::Dumper):
+
+$VAR1 = [
+  {
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'age' => '30'
+  },
+  {
+    'first_name' => 'Jane',
+    'last_name' => 'Smith',
+    'age' => '25'
+  },
+  {
+    'first_name' => 'Bob',
+    'last_name' => 'Johnson',
+    'age' => '40'
+  }
+];

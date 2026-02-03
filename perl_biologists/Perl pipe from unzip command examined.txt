@@ -1,0 +1,16 @@
+#########################################
+# Perl pipe from unzip command examined #
+#########################################
+
+# Why this is useful for Perl
+# You can stream the unzipped contents directly into Perl without temp files and without slurping:
+
+open my $fh, "-|", "unzip -p file.zip inner.txt" or die $!;
+while (<$fh>) {
+    
+# process line-by-line, streaming
+}
+
+This gives you true streaming, constant memory usage, no temp files, no full-file buffers
+Exactly like reading a normal file, except decompression happens upstream.
+
