@@ -117,9 +117,10 @@ my @fields = split /,/, $line;
 
 print defined $fields[2] ? "defined\n" : "undef\n";
 ```
-Output  
+Output
+```
 undef  
-
+```
 Because index 2 was never created.
 
 #### Important Gotcha: Trailing Empty Fields  
@@ -130,9 +131,9 @@ my $line = "John,25,";
 my @fields = split /,/, $line;
 ```
 Result
-
+```
 ("John", "25")   # last empty field is LOST
-
+```
 To preserve trailing empty fields:
 ```
 my @fields = split /,/, $line, -1;
