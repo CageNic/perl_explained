@@ -8,9 +8,9 @@ An undefined value means the variable has no value at all
 my $x;
 print "undef\n" unless defined $x;
 ```
-defined($x) → false  
-$x in boolean context → false  
-$x eq "" → warning (uninitialized value)  
+- defined($x) → false  
+- $x in boolean context → false  
+- $x eq "" → warning (uninitialized value)  
 
 #### Typical causes  
 
