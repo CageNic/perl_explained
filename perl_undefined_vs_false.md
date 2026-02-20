@@ -139,9 +139,9 @@ To preserve trailing empty fields:
 my @fields = split /,/, $line, -1;
 ```
 Output  
-
+```
 ("John", "25", "")
-
+```
 #### How to Distinguish Properly
 ```
 Check if column exists
