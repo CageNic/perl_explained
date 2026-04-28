@@ -1,0 +1,97 @@
+##########################################
+# Perl to replicate inner join left join #
+##########################################
+
+# In Perl, how to mimic a SQL left join and inner join
+
+# In Perl, to mimic SQL LEFT JOIN and INNER JOIN, you typically work with arrays of hashes (AoH) or hashes of hashes (HoH), and implement the logic manually
+# Perl doesn't have built-in SQL-like join operations, so you need to write the matching/joining logic yourself.
+
+# Below are examples of both INNER JOIN and LEFT JOIN, assuming two arrays of hashes representing "tables".
+
+# Sample Data
+# Let's assume we have two datasets:
+
+my @users = (
+    { id => 1, name => 'Alice' },
+    { id => 2, name => 'Bob' },
+    { id => 3, name => 'Charlie' },
+);
+
+my @orders = (
+    { order_id => 101, user_id => 1, item => 'Book' },
+    { order_id => 102, user_id => 2, item => 'Pen' },
+    { order_id => 103, user_id => 2, item => 'Notebook' },
+);
+
+# Join @users with @orders on users.id = orders.user_id.
+
+###################################
+# INNER JOIN (Only matching rows) #
+###################################
+
+foreach my $user (@users) {
+    foreach my $order (@orders) {
+        if ($user->{id} == $order->{user_id}) {
+            print "$user->{name} ordered $order->{item}\n";
+        }
+    }
+}
+
+############
+# produces #
+############
+
+Alice ordered Book
+Bob ordered Pen
+Bob ordered Notebook
+Only users who have orders are shown.
+
+#############################################
+# LEFT JOIN (All users, with orders if any) #
+#############################################
+
+foreach my $user (@users) {
+    my $found = 0;
+    foreach my $order (@orders) {
+        if ($user->{id} == $order->{user_id}) {
+            print "$user->{name} ordered $order->{item}\n";
+            $found = 1;
+        }
+    }
+    if (!$found) {
+        print "$user->{name} has no orders\n";
+    }
+}
+
+############
+# produces #
+############
+
+Alice ordered Book
+Bob ordered Pen
+Bob ordered Notebook
+Charlie has no orders
+
+# Even users without orders are included (like Charlie), with a default message.
+
+############################################
+# Optimization with Hash Lookup (Optional) #
+############################################
+
+# If you have large data, it's more efficient to create a hash lookup from one of the tables.
+
+# Build a hash lookup of orders by user_id
+
+my %orders_by_user;
+push @{ $orders_by_user{ $_->{user_id} } }, $_ for @orders;
+
+foreach my $user (@users) {
+    if (exists $orders_by_user{ $user->{id} }) {
+        foreach my $order (@{ $orders_by_user{ $user->{id} } }) {
+            print "$user->{name} ordered $order->{item}\n";
+        }
+    } else {
+        print "$user->{name} has no orders\n";
+    }
+}
