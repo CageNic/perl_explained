@@ -1,0 +1,40 @@
+##################################
+# perl HTTP::Tiny examined part2 #
+##################################
+
+# downloading images without loading them fully into memory
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use HTTP::Tiny;
+
+my $http = HTTP::Tiny->new();
+my $image_url = "https://example.com/image.jpg";
+my $output_file = "image.jpg";
+
+open (my $fh, '>:raw', $output_file) or die $!;
+my $res = http->get($image_url,
+    {
+        data_callback => sub {
+            my ($chunk) = @_;
+            print $fh $chunk;
+        }
+    }
+);
+close $fh;
+
+# inspecting content - not downloading it
+
+use HTTP::Tiny;
+
+my $http = HTTP::Tiny->new();
+my $res = http->head("https://example.com/file.zip");
+
+if ($res->{success}) {
+    print "Content-Type: " . $res->{headers}->{'Content-type'} , "\n";
+    print "Size: " . $res->{headers}->{'Content-length'} , "\n";
+}
+
+
+
