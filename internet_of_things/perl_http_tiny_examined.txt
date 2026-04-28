@@ -1,0 +1,160 @@
+############################
+# perl HTTP::Tiny examined #
+############################
+
+###################################################################################################
+# test 1 - get url, check $res - which is the header response rather than $res->content (i.e. the # # webpage)                                                                                        #
+###################################################################################################
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use HTTP::Tiny;
+use Data::Dumper;
+
+my $http = HTTP::Tiny->new(verify_SSL => 0);
+my $url  = "https://ws.audioscrobbler.com";
+my $res = $http->get($url);
+if ($res->{success}) {
+    print "HTTPS works!\n";
+    print Dumper($res) , "\n";
+} else {
+    print "Failed: $res->{status} $res->{reason}\n";
+}
+
+############################################################################################################
+# test 2 - get the $res->content in chunks so it is streamed - and therefore takes little memory for each  #
+# chunk                                                                                                    #
+############################################################################################################
+
+########################
+# without the callback #
+########################
+
+use strict;
+use warnings;
+use HTTP::Tiny;
+use Data::Dumper;
+
+my $http = HTTP::Tiny->new(verify_SSL => 0);
+my $url  = "https://ws.audioscrobbler.com";
+my $res = $http->get($url);
+if ($res->{success}) {
+    print $res->{content} , "\n";
+} else {
+    print "Failed: $res->{status} $res->{reason}\n";
+}
+
+###########################################
+# with the callback - not writing to file #
+###########################################
+
+# The key point: when you provide data_callback in HTTP::Tiny,
+# it stops populating \$response-{content}, so you must build it yourself inside the callback.
+
+# Why this works
+# data_callback gives you each chunk as it arrives.
+# You manually concatenate (.=) into $content.
+# That $content becomes your equivalent of result->{content}.
+# When to do this vs not
+# If the page is small → don’t use data_callback, just read $response->{content}.
+# If the page is large or you want streaming control → use data_callback and build (or process)
+# incrementally
+
+
+use strict;
+use warnings;
+use HTTP::Tiny;
+
+my $url = 'https://ws.audioscrobbler.com';
+
+my $content = '';
+
+my $http = HTTP::Tiny->new;
+
+my $response = $http->get($url, {
+    data_callback => sub {
+        my ($chunk, $res) = @_;
+        $content .= $chunk;   # accumulate chunks
+    },
+});
+
+if ($response->{success}) {
+    print "Got content:\n";
+    print $content;
+} else {
+    warn "Request failed: $response->{status} $response->{reason}\n";
+}
+
+#######################################
+# with the callback - writing to file #
+#######################################
+
+# but note... 
+
+# in this version you are still holding the entire page in memory
+# Using data_callback in HTTP::Tiny just changes who builds the content. If you do this:
+
+$content .= $chunk;
+
+# you’re effectively recreating what HTTP::Tiny would have done internally for $response->{content}just manually. By the time you call:
+
+print $fh $content;
+
+# the whole response body is already sitting in $content.
+
+# So:
+
+# Callback + $content .= $chunk → full page in memory (yes)
+# Callback + print $fh $chunk → streaming, no full copy (no)
+# Subtle but important distinction
+
+# The callback gives you control, not automatic memory savings. You only save memory if you avoid # accumulating the chunks.
+
+# Rule of thumb
+# Need full HTML string later (e.g., regex, parsing all at once)?
+# → Accumulate ($content .= $chunk) → uses memory
+# Just saving or processing incrementally?
+# → Handle each $chunk directly → no full memory usage
+
+use strict;
+use warnings;
+use HTTP::Tiny;
+
+my $url  = 'https://example.com/';
+my $file = 'page.html';
+
+my $content = '';
+my $http = HTTP::Tiny->new;
+
+my $response = $http->get($url, {
+    data_callback => sub {
+        my ($chunk, $res) = @_;
+        $content .= $chunk;   # build full content
+    },
+});
+
+if ($response->{success}) {
+    open my $fh, '>:raw', $file or die "Cannot open $file: $!";
+    print $fh $content or die "Write failed: $!";
+    close $fh;
+
+    print "Saved webpage to $file\n";
+} else {
+    warn "Request failed: $response->{status} $response->{reason}\n";
+}
+
+# if your only goal is to save the page, you don’t actually need $content at all—you can write
+# chunks directly as they arrive
+# this avoids holding the whole page in memory.
+
+open my $fh, '>:raw', $file or die "Cannot open $file: $!";
+
+my $response = $http->get($url, {
+    data_callback => sub {
+        my ($chunk, $res) = @_;
+        print $fh $chunk or die "Write failed: $!";
+    },
+});
+
+close $fh;
