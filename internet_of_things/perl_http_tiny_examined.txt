@@ -67,9 +67,7 @@ use warnings;
 use HTTP::Tiny;
 
 my $url = 'https://ws.audioscrobbler.com';
-
 my $content = '';
-
 my $http = HTTP::Tiny->new;
 
 my $response = $http->get($url, {
@@ -123,7 +121,6 @@ use HTTP::Tiny;
 
 my $url  = 'https://example.com/';
 my $file = 'page.html';
-
 my $content = '';
 my $http = HTTP::Tiny->new;
 
@@ -154,7 +151,7 @@ my $response = $http->get($url, {
     data_callback => sub {
         my ($chunk, $res) = @_;
         print $fh $chunk or die "Write failed: $!";
-    },
-});
-
+    }
+}
+);
 close $fh;
