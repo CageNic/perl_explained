@@ -29,11 +29,11 @@ close $fh;
 use HTTP::Tiny;
 
 my $http = HTTP::Tiny->new();
-my $res = http->head("https://example.com/file.zip");
+my $res = $http->head("https://example.com/file.zip");
 
 if ($res->{success}) {
-    print "Content-Type: " . $res->{headers}->{'Content-type'} , "\n";
-    print "Size: " . $res->{headers}->{'Content-length'} , "\n";
+    print "Content-Type: " , $res->{headers}->{'Content-type'} , "\n";
+    print "Size: " , $res->{headers}->{'Content-length'} , "\n";
 }
 
 
