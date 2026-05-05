@@ -1,0 +1,297 @@
+################################################################################################
+## For Http::Tiny, what callback is actually doing including why a chunk size is not declared ##
+################################################################################################
+
+# The core idea
+# When you pass a data_callback, you’re telling HTTP::Tiny:
+# Don’t store the body—just hand me pieces of it as you read from the socket
+# So instead of building one big string in memory, it runs a loop internally that:
+
+# Reads some bytes from the network
+# Gives those bytes to your callback
+# Repeats until the response is finished
+# What the code is really doing
+
+# Example
+
+$http->get($url, {
+    data_callback => sub {
+        my ($chunk, $response) = @_;
+        print $chunk;
+    }
+});
+
+####################################
+## Step-by-step behind the scenes ##
+####################################
+
+# Internally, HTTP::Tiny is doing something conceptually like:
+
+while (1) {
+    my $chunk = read_from_socket();  # read some bytes
+    last unless length $chunk;
+
+    $callback->($chunk, $response);
+}
+
+# So your callback:
+
+sub {
+    my ($chunk, $response) = @_;
+    print $chunk;
+}
+
+# means:
+
+# $chunk → a piece of raw response body
+# $response → metadata (status, headers, etc.)
+# Each time new data arrives, your function is called again.
+
+#############################
+## What is a “chunk” here? ##
+#############################
+
+# This is the part that confuses people:
+
+# The $chunk you receive is NOT the same thing as HTTP chunked encoding chunks.
+
+# Instead, it’s:
+
+# Whatever size HTTP::Tiny happened to read from the socket
+# Typically something like a few KB (implementation-dependent)
+# So:
+
+# It might be 4 KB this time
+# 8 KB next time
+# Smaller at the end
+# You don’t control it, and it’s not meaningful at the protocol level.
+
+####################################
+## Why chunk size is not declared ##
+####################################
+
+# Because you are not dealing with HTTP chunking directly.
+# Even if the server is using chunked transfer encoding (from HTTP/1.1):
+
+# HTTP::Tiny parses and removes the chunk headers (4\r\n, etc.)
+# It reassembles the actual body data
+# Then hands you clean byte strings
+ 
+# So instead of this raw wire format:
+
+# 4\r\n
+# Wiki\r\n
+# 5\r\n
+# pedia\r\n
+# 0\r\n
+
+# You just get:
+
+# "Wiki"
+# "pedia"
+
+# or possibly "Wikipedia" in one go
+
+###############
+## Important ##
+###############
+
+# The “chunks” you see are:
+
+# Transport-buffer chunks, not protocol chunks
+# Defined by:
+
+# socket read size
+# internal buffer size
+# network timing
+
+# That’s why:
+
+# There is no chunk size parameter
+# You cannot rely on chunk boundaries for logic
+
+######################################################
+## What your callback should (and shouldn’t) assume ##
+######################################################
+
+#################
+## Assumptions ##
+#################
+
+# Data arrives in order
+# All chunks together form the full body
+# You can process incrementally (write to file, parse stream, etc.)
+# Unsafe assumptions
+
+# Chunk boundaries mean anything
+# You’ll get consistent sizes
+# One logical unit (e.g. a JSON object) fits in one chunk
+# A clearer mental model
+
+# Think of it like this:
+# The server sends a long stream of bytes
+# HTTP::Tiny reads it with a scoop
+# Each scoop becomes $chunk
+# You’re handed each scoop immediately
+
+# You’re not told:
+# how big the scoop should be
+# how the server packaged it
+
+# Only:
+# “Here’s the next bit of data.”
+
+######################################
+## Practical example: saving a file ##
+######################################
+
+open my $fh, '>', 'output.bin' or die $!;
+
+$http->get($url, {
+    data_callback => sub {
+        my ($chunk, $response) = @_;
+        print $fh $chunk;
+    }
+});
+
+close $fh;
+
+
+# What happens
+
+# File grows incrementally
+# Memory stays low
+# No need to wait for the full response
+
+# The callback is a hook into the read loop
+# $chunk is just whatever bytes were read at that moment
+# HTTP-level chunking (if any) is already handled and hidden
+# That’s why no chunk size is exposed or needed
+
+#####################################################################################################################
+## can you use callback to download files rather than web pages                                                     #
+#####################################################################################################################
+# Yes, it’s one of the main practical uses of data_callback in HTTP::Tiny                                           #
+# the callback approach is often better for files than pages, because it avoids loading the entire file into memory #
+#####################################################################################################################
+
+##############
+## The idea ##
+##############
+
+#######################################################################################
+# Instead of letting HTTP::Tiny store the response body in $response->{content}, you: #
+# Open a file handle                                                                  #
+# Write each incoming chunk directly to disk                                          #
+# So you’re effectively turning the HTTP response into a stream → file pipeline       #
+#######################################################################################
+
+##################################
+## Simple file download example ##
+##################################
+
+use HTTP::Tiny;
+
+my $http = HTTP::Tiny->new;
+
+open my $fh, '>:raw', 'downloaded.bin' or die $!;
+
+my $response = $http->get($url, {
+    data_callback => sub {
+        my ($chunk, $res) = @_;
+        print $fh $chunk;
+    }
+});
+
+close $fh;
+
+die "Download failed: $response->{status} $response->{reason}"
+    unless $response->{success};
+
+###########################
+## What’s happening here ##
+###########################
+
+###################################
+# HTTP::Tiny starts the request   #
+# As data arrives:                #     
+# It reads a piece ($chunk)       #
+# Immediately calls your callback #
+# Your callback:                  #
+# Writes that piece to the file   #
+# Repeat until done               #
+###################################
+
+#####################################
+# So instead of:                    #
+# Download everything, then save it #
+# you get:                          #
+# Save it while it’s downloading    #
+#####################################
+
+###############################################################
+# Why this is ideal for files                                 #
+# 1. Memory efficiency                                        #
+# Large file (e.g. 2 GB)                                      # 
+# Still uses only a few KB of RAM at a time                   #
+# 2. Speed                                                    # 
+# Disk writing happens in parallel with network reading       #
+# 3. Reliability                                              #
+# Less risk of running out of memory or crashing mid-download #
+###############################################################
+
+#################################
+## Important detail: :raw mode ##
+#################################
+
+open my $fh, '>:raw', 'file.bin'
+
+# This matters because:
+# Prevents newline translation (especially on Windows)
+# Ensures binary files (images, zips, etc.) aren’t corrupted
+
+# What about file types?
+# Works for anything:
+# HTML pages → .html
+# Images → .jpg, .png
+# Archives → .zip, .tar.gz
+# Videos, PDFs, etc.
+# The callback doesn’t care—it just handles bytes.
+
+############
+# A caveat #
+############
+
+# Even if the download fails (e.g. 404), the callback may still have written partial data
+# So check:
+
+unless ($response->{success}) {
+    unlink 'downloaded.bin';  # remove incomplete file
+}
+
+##############################################
+## progress tracking                         #
+## You can track how much you’ve downloaded: #
+##############################################
+
+my $total = 0;
+
+$http->get($url, {
+    data_callback => sub {
+        my ($chunk, $res) = @_;
+        $total += length $chunk;
+        print $fh $chunk;
+        print "Downloaded $total bytes\n";
+    }
+  }
+);
+
+###################################
+## Key takeaway - stream to disk ##
+###################################
+
+# Using data_callback for files:
+# turns HTTP::Tiny from:
+# fetch everything into memory
+# into:
+# stream to disk
