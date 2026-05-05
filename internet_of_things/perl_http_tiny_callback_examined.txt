@@ -1,5 +1,5 @@
 ################################################################################################
-## For Http::Tiny, what callback is actually doing including why a chunk size is not declared ##
+## for Http::Tiny, what callback is actually doing including why a chunk size is not declared ##
 ################################################################################################
 
 # The core idea
