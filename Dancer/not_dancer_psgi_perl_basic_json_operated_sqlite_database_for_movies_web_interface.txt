@@ -1,0 +1,815 @@
+Perl basic json operated sqlite database for movies web interface
+
+The module: lib/MovieDB.pm
+This package handles database creation + connection.
+
+package MovieDB;
+use strict;
+use warnings;
+use DBI;
+
+# ---------------------------------------------------
+# DATABASE FILE (shared config)
+# ---------------------------------------------------
+my $DB_FILE = "movies.db";
+
+# ---------------------------------------------------
+# INIT DATABASE + RETURN HANDLE
+# ---------------------------------------------------
+# - Creates DB file if missing
+# - Creates table if missing
+# - Returns active DBI handle
+# ---------------------------------------------------
+sub init_db {
+
+    my $dbh = DBI->connect(
+        "dbi:SQLite:dbname=$DB_FILE",
+        "",
+        "",
+        {
+            RaiseError => 1,
+            AutoCommit => 1,
+        }
+    );
+
+    # Create table if it doesn't exist
+    $dbh->do("
+        CREATE TABLE IF NOT EXISTS movies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            year INTEGER,
+            title TEXT,
+            country TEXT
+        )
+    ");
+
+    return $dbh;
+}
+
+1; # required for Perl modules
+
+app.psgi (fully commented, JSON API + external DB module)
+
+---------------------------------
+use strict;
+use warnings;
+
+# ---------------------------------------------------
+# CORE MODULES
+# ---------------------------------------------------
+
+use Plack::Request;   # Parses incoming HTTP requests (GET/POST/etc)
+use JSON;             # Converts Perl data structures into JSON strings
+
+# ---------------------------------------------------
+# CUSTOM MODULE (our database layer)
+# ---------------------------------------------------
+# This loads MovieDB.pm from the "lib" directory.
+# It contains:
+#   - database connection logic
+#   - database initialization (table creation)
+# ---------------------------------------------------
+use lib 'lib';
+use MovieDB;
+
+# ---------------------------------------------------
+# JSON ENCODER OBJECT
+# ---------------------------------------------------
+# utf8     => ensures proper encoding
+# pretty   => formats output for readability (useful for debugging)
+# ---------------------------------------------------
+my $json = JSON->new->utf8->pretty;
+
+# ---------------------------------------------------
+# PSGI APPLICATION ENTRY POINT
+# ---------------------------------------------------
+# PSGI expects a single subroutine that:
+#   input  -> HTTP request environment
+#   output -> HTTP response array reference
+# ---------------------------------------------------
+my $app = sub {
+
+    # -----------------------------------------------
+    # STEP 1: RECEIVE REQUEST ENVIRONMENT
+    # -----------------------------------------------
+    my $env = shift;
+
+    # Wrap PSGI environment into a convenient object
+    my $req = Plack::Request->new($env);
+
+    # -----------------------------------------------
+    # STEP 2: OPEN DATABASE CONNECTION
+    # -----------------------------------------------
+    # This calls our external module:
+    #   MovieDB::init_db()
+    #
+    # It will:
+    #   - create SQLite DB if missing
+    #   - ensure table exists
+    #   - return active DB handle ($dbh)
+    # -----------------------------------------------
+    my $dbh = MovieDB::init_db();
+
+    # -----------------------------------------------
+    # STEP 3: EXTRACT HTTP DETAILS
+    # -----------------------------------------------
+
+    # HTTP method: GET, POST, PUT, DELETE
+    my $method = $req->method;
+
+    # URL path: /movies, /movies/find, /movies/1, etc
+    my $path   = $req->path_info;
+
+    # Extract numeric ID from URL if present
+    # Example: /movies/5  -> $id = 5
+    my ($id) = ($path =~ m{^/movies/(\d+)$});
+
+    # =========================================================
+    # ROUTE 1: SEARCH MOVIES (LIKE OMDb STYLE)
+    # =========================================================
+    # Example:
+    #   GET /movies/find?title=Dracula
+    #
+    # Returns:
+    #   multiple matches (not unique)
+    #   used for discovery, NOT direct modification
+    # =========================================================
+    if ($method eq 'GET' && $path eq '/movies/find') {
+
+        # Extract search term from query string
+        my $title = $req->param('title') || '';
+
+        # Prepare results container
+        my @results;
+
+        # Only search if user provided input
+        if ($title ne '') {
+
+            # SQL LIKE pattern enables partial matching
+            my $like = "%$title%";
+
+            # Prepare SQL query
+            my $sth = $dbh->prepare("
+                SELECT id, year, title, country
+                FROM movies
+                WHERE title LIKE ?
+                ORDER BY year
+            ");
+
+            # Execute query with bound parameter (prevents SQL injection)
+            $sth->execute($like);
+
+            # Fetch all matching rows
+            while (my $row = $sth->fetchrow_hashref) {
+                push @results, $row;
+            }
+        }
+
+        # Return JSON response
+        # Structure:
+        # {
+        #   query: "Dracula",
+        #   results: [ ...multiple movies... ]
+        # }
+        return [
+            200,
+            ['Content-Type' => 'application/json'],
+            [$json->encode({
+                query   => $title,
+                results => \@results
+            })]
+        ];
+    }
+
+    # =========================================================
+    # ROUTE 2: GET ALL MOVIES
+    # =========================================================
+    # Example:
+    #   GET /movies
+    #
+    # Returns full list of all movies in database
+    # =========================================================
+    if ($method eq 'GET' && $path eq '/movies') {
+
+        # Query all movies ordered by year
+        my $sth = $dbh->prepare("
+            SELECT id, year, title, country
+            FROM movies
+            ORDER BY year
+        ");
+
+        $sth->execute();
+
+        my @movies;
+
+        # Convert DB rows into Perl array of hashes
+        while (my $row = $sth->fetchrow_hashref) {
+            push @movies, $row;
+        }
+
+        # Return structured JSON response
+        return [
+            200,
+            ['Content-Type' => 'application/json'],
+            [$json->encode({
+                results => \@movies
+            })]
+        ];
+    }
+
+    # =========================================================
+    # ROUTE 3: GET SINGLE MOVIE BY ID
+    # =========================================================
+    # Example:
+    #   GET /movies/3
+    #
+    # Uses database primary key (NOT title)
+    # =========================================================
+    if ($method eq 'GET' && defined $id) {
+
+        my $sth = $dbh->prepare("
+            SELECT id, year, title, country
+            FROM movies
+            WHERE id = ?
+        ");
+
+        $sth->execute($id);
+
+        my $movie = $sth->fetchrow_hashref;
+
+        # If movie exists -> return it
+        # Otherwise -> return 404 error JSON
+        return [
+            $movie ? 200 : 404,
+            ['Content-Type' => 'application/json'],
+            [$json->encode(
+                $movie || { error => "Movie not found" }
+            )]
+        ];
+    }
+
+    # =========================================================
+    # ROUTE 4: CREATE MOVIE
+    # =========================================================
+    # Example:
+    #   POST /movies
+    #
+    # Body parameters:
+    #   year, title, country
+    # =========================================================
+    if ($method eq 'POST' && $path eq '/movies') {
+
+        # Insert new record into database
+        $dbh->do("
+            INSERT INTO movies (year, title, country)
+            VALUES (?, ?, ?)
+        ", undef,
+            $req->param('year'),
+            $req->param('title'),
+            $req->param('country')
+        );
+
+        return [
+            201,
+            ['Content-Type' => 'application/json'],
+            [$json->encode({
+                status => "created"
+            })]
+        ];
+    }
+
+    # =========================================================
+    # ROUTE 5: UPDATE MOVIE BY ID
+    # =========================================================
+    # Example:
+    #   PUT /movies/2
+    #
+    # Updates existing record
+    # =========================================================
+    if ($method eq 'PUT' && defined $id) {
+
+        # Extract parameters from request body
+        my $p = $req->parameters;
+
+        # Update row in database
+        $dbh->do("
+            UPDATE movies
+            SET year=?, title=?, country=?
+            WHERE id=?
+        ", undef,
+            $p->{year},
+            $p->{title},
+            $p->{country},
+            $id
+        );
+
+        return [
+            200,
+            ['Content-Type' => 'application/json'],
+            [$json->encode({
+                status => "updated",
+                id     => $id
+            })]
+        ];
+    }
+
+    # =========================================================
+    # ROUTE 6: DELETE MOVIE BY ID
+    # =========================================================
+    # Example:
+    #   DELETE /movies/2
+    #
+    # Permanently removes record
+    # =========================================================
+    if ($method eq 'DELETE' && defined $id) {
+
+        $dbh->do("
+            DELETE FROM movies WHERE id = ?
+        ", undef, $id);
+
+        return [
+            200,
+            ['Content-Type' => 'application/json'],
+            [$json->encode({
+                status => "deleted",
+                id     => $id
+            })]
+        ];
+    }
+
+    # =========================================================
+    # FALLBACK ROUTE (UNKNOWN REQUEST)
+    # =========================================================
+    return [
+        404,
+        ['Content-Type' => 'application/json'],
+        [$json->encode({
+            error => "Route not found"
+        })]
+    ];
+};
+
+# ---------------------------------------------------
+# RETURN APP TO PSGI SERVER
+# ---------------------------------------------------
+return $app;
+
+
+
+🟦 Directory structure (what you should have)
+
+movies-api/
+
+├── app.psgi
+│
+└── lib/
+    └── MovieDB.pm
+
+
+
+app.psgi → your JSON API (routes + HTTP logic)
+
+
+lib/MovieDB.pm → database setup + connection + schema bootstrap
+
+🧠 What this version teaches (architecture view)
+
+You now have a clean separation:
+
+
+🟦 app.psgi (this file)
+
+
+routing (decides what endpoint does what)
+
+
+HTTP handling
+
+
+response formatting
+
+
+🟩 MovieDB.pm
+
+
+
+database setup
+
+
+schema creation
+
+
+connection management
+
+
+🟨 SQLite
+
+
+
+persistent storage layer
+
+
+
+🟢 Key concept you’ve now implemented correctly
+
+
+Search is fuzzy and returns multiple results
+
+Identity is strict and uses IDs only
+
+
+
+This is exactly how systems like OMDb API are structured internally.
+
+
+
+
+
+🟢 Optional next upgrade (if you want)
+
+I can extend this script in useful ways:
+
+
+🔹 Read from JSON file instead of hardcoding
+
+🔹 Read from CSV (very common in real ingestion pipelines)
+
+🔹 Prevent duplicates (title + year check)
+
+🔹 Log to file instead of stdout
+
+🔹 Connect it to your /movies/find API for validation
+
+Just tell me 👍
+
+read from csv file
+Good — CSV ingestion is the classic next step for a Perl + SQLite setup.
+
+
+We’ll keep it simple and robust:
+
+
+
+
+no frameworks
+
+
+no database changes (still using MovieDB.pm)
+
+
+reads a .csv file
+
+
+inserts each row into SQLite
+
+
+uses Perl’s built-in CSV parsing module (Text::CSV)
+
+
+
+🟦 1. Example CSV file: movies.csv
+
+Create this file in your project root:
+
+
+title,year,country
+Dracula,1931,USA
+Dracula,1992,USA
+Inception,2010,USA
+Amelie,2001,France
+
+
+🟦 2. Install CSV module (one-time)
+
+cpan Text::CSV
+
+
+🟦 3. CSV import script: import_movies_csv.pl
+
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+# ---------------------------------------------------
+# LOAD MODULES
+# ---------------------------------------------------
+use lib 'lib';
+use MovieDB;
+
+use Text::CSV;
+
+# ---------------------------------------------------
+# CONNECT TO DATABASE
+# ---------------------------------------------------
+my $dbh = MovieDB::init_db();
+
+# ---------------------------------------------------
+# CSV FILE INPUT
+# ---------------------------------------------------
+my $file = "movies.csv";
+
+# ---------------------------------------------------
+# OPEN CSV FILE
+# ---------------------------------------------------
+open my $fh, "<", $file
+    or die "Cannot open $file: $!";
+
+# CSV parser object
+my $csv = Text::CSV->new({
+    binary => 1,
+    auto_diag => 1,
+});
+
+# ---------------------------------------------------
+# READ HEADER ROW
+# ---------------------------------------------------
+# First line is: title,year,country
+# We skip it because we already know structure
+# ---------------------------------------------------
+my $header = $csv->getline($fh);
+
+# ---------------------------------------------------
+# PROCESS EACH ROW
+# ---------------------------------------------------
+while (my $row = $csv->getline($fh)) {
+
+    # Map CSV columns to variables
+    my ($title, $year, $country) = @$row;
+
+    # ---------------------------------------------------
+    # INSERT INTO DATABASE
+    # ---------------------------------------------------
+    # Uses parameterized query to prevent SQL issues
+    # ---------------------------------------------------
+    $dbh->do(
+        "INSERT INTO movies (year, title, country)
+         VALUES (?, ?, ?)",
+        undef,
+        $year,
+        $title,
+        $country
+    );
+
+    # Console feedback
+    print "Inserted: $title ($year, $country)\n";
+}
+
+# ---------------------------------------------------
+# CLEANUP
+# ---------------------------------------------------
+close $fh;
+
+print "CSV import complete.\n";
+
+
+🟢 4. Run it
+
+perl import_movies_csv.pl
+
+Output:
+
+
+Inserted: Dracula (1931, USA)
+Inserted: Dracula (1992, USA)
+Inserted: Inception (2010, USA)
+Inserted: Amelie (2001, France)
+CSV import complete.
+
+
+🧠 What you now have
+
+You’ve built a 3-layer ingestion system:
+
+
+1. Web API (real-time)
+
+POST /movies
+
+2. CLI script (manual inserts)
+
+add_movies.pl
+
+3. CSV bulk loader (batch ingestion)
+
+import_movies_csv.pl
+
+
+🟡 Why this matters (real-world pattern)
+
+This is exactly how real data pipelines work:
+
+
+
+
+CSV → bulk import tools
+
+
+CLI → maintenance scripts
+
+
+API → live system ingestion
+
+
+Even large production systems still support all three.
+
+
+
+🟢 If you want next step
+
+I can extend this in useful directions:
+
+
+🔹 Skip duplicates (title + year check)
+
+🔹 Upsert logic (update if exists instead of insert)
+
+🔹 Validate rows before inserting
+
+🔹 Support large CSV streaming (millions of rows)
+
+🔹 Or turn this into a reusable “MovieImporter.pm” module
+
+Just tell me 👍
+
+and now add the native sqlite import function so that can be used as a manual process also from a csv file
+Good — now you’re basically adding a second ingestion path using SQLite’s native .import, which is the fastest way to load CSV data.
+
+
+We’ll keep everything aligned with your current design:
+
+
+
+
+DB schema still in MovieDB.pm
+
+
+API unchanged
+
+
+this is a manual SQLite CLI method
+
+
+
+🟦 1. Important constraint first
+
+SQLite’s .import works from the SQLite command-line tool, not from Perl.
+
+
+So this is a DB-level bulk import, outside your app.
+
+
+
+🟦 2. Prepare your CSV correctly
+
+SQLite .import expects:
+
+
+
+
+header row usually NOT used (we’ll handle it)
+
+
+clean comma-separated values
+
+
+movies.csv
+
+Dracula,1931,USA
+Dracula,1992,USA
+Inception,2010,USA
+Amelie,2001,France
+
+⚠️ Notice: no header row (important for simplest import)
+
+
+
+🟦 3. Open SQLite shell
+
+sqlite3 movies.db
+
+
+🟦 4. Ensure table exists (if not already created)
+
+If your Perl app hasn’t run yet:
+
+
+CREATE TABLE IF NOT EXISTS movies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    year INTEGER,
+    title TEXT,
+    country TEXT
+);
+
+
+🟦 5. Native CSV import command
+
+Now run:
+
+
+.mode csv
+.import movies.csv movies
+
+
+🧠 What this does
+
+
+
+.mode csv → tells SQLite to interpret input as CSV
+
+
+.import file table → inserts each row directly into table
+
+
+So it maps like this:
+
+
+CSV column	SQLite column
+1	title
+2	year
+3	country
+
+⚠️ BUT ORDER MATTERS — SQLite matches columns positionally unless headers are used carefully.
+
+
+
+🟡 6. If your table has id (it does), use this safer version
+
+Because your table has an autoincrement id, you should explicitly ignore it:
+
+
+Better approach:
+
+.mode csv
+.import --skip 0 movies.csv movies
+
+OR (more reliable approach):
+
+
+Create a temporary table:
+
+
+CREATE TABLE movies_tmp (
+    title TEXT,
+    year INTEGER,
+    country TEXT
+);
+
+Import into temp:
+
+
+.mode csv
+.import movies.csv movies_tmp
+
+Then copy into real table:
+
+
+INSERT INTO movies (title, year, country)
+SELECT title, year, country FROM movies_tmp;
+
+Then cleanup:
+
+
+DROP TABLE movies_tmp;
+
+
+🟢 Why this 2-step method is better
+
+Because it ensures:
+
+
+
+
+correct column mapping
+
+
+no accidental overwrite of id
+
+
+safe schema alignment
+
+
+easier debugging
+
+
+
+🧠 What you now have (full ingestion stack)
+
+1. Perl API ingestion
+
+POST /movies
+
+2. Perl CLI ingestion
+
+import_movies_csv.pl
+
+3. SQLite native ingestion (fastest)
+
+sqlite3 + .import
+
+
+🟢 When to use each
+
+Method	Use case
+API	live apps, web clients
+Perl script	validation + controlled imports
+SQLite .import	fastest bulk loading (millions of rows)
