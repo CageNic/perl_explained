@@ -5,8 +5,7 @@ use HTTP::Tiny;
 use Data::Dumper;
 
 my $http = HTTP::Tiny->new(verify_SSL => 0);
-# my $res = $http->head("https://e.pcloud.link/publink/show?code=XZ2oaGZEdotQG9acbLH6fRjPOXluQwKaD47");
-my $res = $http->head("https://elon1.pcloud.com/cBZo0g7diZ5PQQfE7ZZZtsXu5kZ2ZZqg0ZkZXKfNKLZM4Z6LZfPZXPZ5LZhFZG8ZZWLZy5ZiLZDVZKJZEkZ2oaGZN6UDYhu7OfL44x7hmmYkD0k5D8iy/IMPACTncd_Engl_31032026.zip");
+my $res = $http->head("https://ws.audioscrobbler.com");
 
 if ($res->{success}) {
     print Dumper ($res->{headers}), "\n";
@@ -15,3 +14,17 @@ if ($res->{success}) {
 else {
     print "Failed: $res->{status} $res->{reason}\n";
 }
+
+############
+# produces #
+############
+
+      'via' => '1.1 google',
+          'accept-ranges' => 'bytes',
+          'last-modified' => 'Wed, 22 Apr 2026 11:50:17 GMT',
+          'content-length' => '151',
+          'content-type' => 'text/html',
+          'server' => 'openresty',
+          'etag' => '"69e8b5f9-97"',
+          'alt-svc' => 'h3=":443"; ma=2592000',
+          'date' => 'Mon, 08 Jun 2026 10:46:51 GMT'
