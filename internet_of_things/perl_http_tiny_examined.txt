@@ -2,30 +2,9 @@
 # perl HTTP::Tiny examined #
 ############################
 
-###################################################################################################
-# test 1 - get url, check $res - which is the header response rather than $res->content (i.e. the # # webpage)                                                                                        #
-###################################################################################################
+# get the $res->content in chunks so it is streamed
+# and therefore takes little memory for each chunk
 
-#!/usr/bin/perl
-use strict;
-use warnings;
-use HTTP::Tiny;
-use Data::Dumper;
-
-my $http = HTTP::Tiny->new(verify_SSL => 0);
-my $url  = "https://ws.audioscrobbler.com";
-my $res = $http->get($url);
-if ($res->{success}) {
-    print "HTTPS works!\n";
-    print Dumper($res) , "\n";
-} else {
-    print "Failed: $res->{status} $res->{reason}\n";
-}
-
-############################################################################################################
-# test 2 - get the $res->content in chunks so it is streamed - and therefore takes little memory for each  #
-# chunk                                                                                                    #
-############################################################################################################
 
 ########################
 # without the callback #
