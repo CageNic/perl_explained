@@ -15,6 +15,9 @@ else {
     print "Failed: $res->{status} $res->{reason}\n";
 }
 
+# print a specific header
+print $res->{headers}->{'content-type'};
+
 ############
 # produces #
 ############
@@ -28,3 +31,5 @@ else {
           'etag' => '"69e8b5f9-97"',
           'alt-svc' => 'h3=":443"; ma=2592000',
           'date' => 'date' => 'Wed, day month year xx:xx:xx GMT'
+
+text/html
