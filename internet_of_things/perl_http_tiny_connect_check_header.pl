@@ -21,10 +21,10 @@ else {
 
       'via' => '1.1 google',
           'accept-ranges' => 'bytes',
-          'last-modified' => 'Wed, 22 Apr 2026 11:50:17 GMT',
+          'last-modified' => 'date' => 'Wed, day month year xx:xx:xx GMT',
           'content-length' => '151',
           'content-type' => 'text/html',
           'server' => 'openresty',
           'etag' => '"69e8b5f9-97"',
           'alt-svc' => 'h3=":443"; ma=2592000',
-          'date' => 'Mon, 08 Jun 2026 10:46:51 GMT'
+          'date' => 'date' => 'Wed, day month year xx:xx:xx GMT'
