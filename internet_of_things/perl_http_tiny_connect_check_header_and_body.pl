@@ -1,6 +1,9 @@
-#####################################################################################
-# check if a connection to last.fm can be made and if so, check the header response #
-#####################################################################################
+##############################################################################################
+# check if a connection to last.fm can be made and if so, check the header and body response #
+##############################################################################################
+
+#  returns header and body... can check header only whihc would use less memory
+# see perl_http_tiny_connect_check_header.pl for example
 
 # ssl check set to false to get round any IT stuff
 
@@ -12,6 +15,8 @@ use Data::Dumper;
 my $http = HTTP::Tiny->new(verify_SSL => 0);
 my $url  = "https://ws.audioscrobbler.com";
 
+# this gets everything
+# need to specifiy header in the get request and printed result (of header) for header only
 my $res = $http->get($url);
 
 if ($res->{success}) {
