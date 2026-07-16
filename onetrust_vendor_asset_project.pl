@@ -17,11 +17,9 @@ use Data::Dumper;
 #             {
 #                 project => 'project_id_1'
 #             },
-#
 #             {
 #                 project => 'project_id_2'
 #             }
-#
 #         ]
 #     }
 # );
