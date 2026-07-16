@@ -99,7 +99,7 @@ while (<$fh>) {
     # split assets
     my @asset_list = split /\s*,\s*/, $assets;
 
-    # if vendor has no asset - create a no asset value
+    # if no asset - create a no asset value
     if (!@asset_list || !$asset_list[0]) {
         @asset_list = ('[No Asset Listed]');
     }
@@ -122,16 +122,12 @@ while (<$fh>) {
 
             # Prevent duplicate vendor/asset/project
             #
-            my $unique_key =
-                join('|',
-                    $vendor,
-                    $asset,
-                    $project
-                );
+            my $unique_key = join('|', $vendor, $asset, $project);
 
             next if $seen{$unique_key};
 
             # store project as an array element
+            # project - hash key, $project - hash value
             push @{ $data{$vendor}{$asset} },
                 {
                     project => $project
@@ -167,11 +163,7 @@ for my $vendor (sort keys %data) {
         for my $project_record (
             @{ $data{$vendor}{$asset} }
         ) {
-            print $out join("\t",
-                $vendor,
-                $asset,
-                $project_record->{project}
-            ), "\n";
+            print $out join("\t", $vendor, $asset, $project_record->{project}), "\n";
         }
     }
 }
