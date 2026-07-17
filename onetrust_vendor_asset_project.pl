@@ -1,10 +1,15 @@
 # SDE Project Log report from OneTrust for file to read
-# to do - get a OneTrust vendor report... read it, skip archived vendors, map it to the vendor, asset, project data structure in this script, so that an output is as the main output of vendor, asset, project is for active vendors
+
+# module VendorLookup in same directory as script
 
 #!/usr/bin/perl
 use strict;
 use warnings;
 use Data::Dumper;
+use JSON qw(encode_json);
+use lib '.';
+use VendorLookup qw(read_vendor_file);
+
 
 # usage:
 #   perl script.pl input_file.txt
@@ -45,14 +50,17 @@ for (@headers) {
     s/^\s+|\s+$//g;
 }
 
-# map column names to positions
+########################################################################
+# map column names to positions - need this as no Text::CSV in GitBash #
+########################################################################
+
 my %col;
 
 for my $i (0 .. $#headers) {
     $col{$headers[$i]} = $i;
 }
 
-# Check required columns exist
+# Check required columns exist - name in list is checked as a hash key
 for my $required ('SDE Project ID', 'Name - Related (Vendors)', 'Name - Related (Assets)', 'SDE Project Status') {
     die "Missing column: $required\n"
         unless exists $col{$required};
@@ -141,29 +149,37 @@ close $fh;
 # check structure
 # print Dumper(\%data);
 
-local $Data::Dumper::Terse = 1;
-open (my $dd,'>','OneTrust_vendor_asset_project_hash_map.txt');
-print $dd Dumper (\%data);
+# json file - do not use - contains archived vendors
+open (my $dd,'>','OneTrust_vendor_asset_project_json_map.json');
+my $json = JSON->new->pretty(1);
+print $dd $json->encode(\%data);
 close $dd;
 
-# print 3-column tab delimited file
+# from the vendor status report on OneTrust - merge the vendor with the vendor from the project report, but filter on active vendors
+# have vendor as hash key, and status as hash value
 
-# columns
-#   Vendor    Asset    Project
+my $hash = read_vendor_file("vendor status.txt");
 
-# a vendor will repeat where an asset has multiple projects
+open (my $merge_out, '>', 'OneTrust_vendor_active_asset_project_map.txt');
+print $merge_out "Vendor\tVendorStatus\tAsset\tProject\n";
 
-open (my $out,'>','OneTrust_vendor_asset_project_map.txt');
-print $out "Vendor\tAsset\tProject\n";
+for my $vendor (sort keys %{$hash}) {
+    next if $vendor eq 'Jay Hughes' or $vendor eq 'Andrew Campbell' or $vendor eq 'Elizabeth Crellin' or $vendor eq 'Sophie Hodges';
 
-for my $vendor (sort keys %data) {
-    for my $asset (sort keys %{ $data{$vendor} }) {
-        for my $project_record (
-            @{ $data{$vendor}{$asset} }
-        ) {
-            print $out join("\t", $vendor, $asset, $project_record->{project}), "\n";
+    my $lookup_value = $hash->{$vendor};
+
+    if (exists $data{$vendor}) {
+        for my $asset (sort keys %{ $data{$vendor} }) {
+            for my $project_record (@{ $data{$vendor}{$asset} }) {
+
+                print $merge_out join("\t",
+                    $vendor,
+                    $lookup_value,
+                    $asset,
+                    $project_record->{project}
+                ), "\n";
+            }
         }
     }
 }
-close $out;
 exit;
