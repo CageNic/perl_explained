@@ -1,6 +1,8 @@
 # SDE Project Log report from OneTrust for file to read
-
 # module VendorLookup in same directory as script
+# module VendorLookup reads vendor status file from OneTrust
+# active projects
+# if require both active and archived projects - comment out this code - next if $status ne 'Active';
 
 #!/usr/bin/perl
 use strict;
@@ -9,31 +11,28 @@ use Data::Dumper;
 use JSON qw(encode_json);
 use lib '.';
 use VendorLookup qw(read_vendor_file);
+use VendorProjectAssetOutput qw(print_vendor_first print_project_first print_asset_first);
 
+# timestamp for file output
+my @t = localtime;
+my $day = $t[3];
+my $month = $t[4] + 1;
+my $year  = $t[5] + 1900;
+
+# format the date - need a leading 0 for days months that are not double digits
+my $file_date = sprintf(
+    "%02d-%02d-%04d",
+    $t[3],        # day
+    $t[4] + 1,    # month
+    $t[5] + 1900  # year
+);
 
 # usage:
 #   perl script.pl input_file.txt
 
-# output structure:
-#
-# %data = (
-#     Vendor Name => {
-#         Asset Name => [
-#             {
-#                 project => 'project_id_1'
-#             },
-#             {
-#                 project => 'project_id_2'
-#             }
-#         ]
-#     }
-# );
+my $file = shift @ARGV or die "Usage: $0 SDE Project Log.txt needed... download from OneTrust\n";
 
-my $file = shift @ARGV
-    or die "Usage: $0 input.txt\n";
-
-open my $fh, '<', $file
-    or die "Cannot open $file: $!\n";
+open (my $fh, '<', $file) or die "Cannot open $file: $!\n";
 
 # read header row
 my $header = <$fh>;
@@ -68,7 +67,7 @@ for my $required ('SDE Project ID', 'Name - Related (Vendors)', 'Name - Related 
 
 # main output structure
 
-my %data;
+my %vendor_data;
 my %seen;
 
 # read lines
@@ -118,23 +117,25 @@ while (<$fh>) {
     #           |
     #           +-- { project => ID }
 
-    for my $vendor (@vendor_list) {
-        next unless $vendor;
-        $vendor =~ s/^\s+|\s+$//g;
+for my $vendor (@vendor_list) {
+    next unless $vendor;
 
+    # Normalize vendor name
+    $vendor =~ s/\([^)]*\)//g;
+    $vendor =~ s/\s+/ /g;
+    $vendor =~ s/^\s+|\s+$//g;
+  
         for my $asset (@asset_list) {
             next unless $asset;
             $asset =~ s/^\s+|\s+$//g;
 
             # Prevent duplicate vendor/asset/project
-            #
             my $unique_key = join('|', $vendor, $asset, $project);
-
             next if $seen{$unique_key};
 
             # store project as an array element
             # project - hash key, $project - hash value
-            push @{ $data{$vendor}{$asset} },
+            push @{ $vendor_data{$vendor}{$asset} },
                 {
                     project => $project
                 };
@@ -149,37 +150,64 @@ close $fh;
 # check structure
 # print Dumper(\%data);
 
-# json file - do not use - contains archived vendors
 open (my $dd,'>','OneTrust_vendor_asset_project_json_map.json');
 my $json = JSON->new->pretty(1);
-print $dd $json->encode(\%data);
+print $dd $json->encode(\%vendor_data);
 close $dd;
 
 # from the vendor status report on OneTrust - merge the vendor with the vendor from the project report, but filter on active vendors
 # have vendor as hash key, and status as hash value
 
+my %asset_data;
+my %project_data;
+my %vendor_data_filtered;
 my $hash = read_vendor_file("vendor status.txt");
 
-open (my $merge_out, '>', 'OneTrust_vendor_active_asset_project_map.txt');
-print $merge_out "Vendor\tVendorStatus\tAsset\tProject\n";
+# exclude the data team from outputs
+my %exclude_vendor = map { $_ => 1 } (
+    'Andrew Campbell',
+    'Elizabeth Crellin',
+    'Sophie Hodges',
+    'Jay Hughes',
+);
 
-for my $vendor (sort keys %{$hash}) {
-    next if $vendor eq 'Jay Hughes' or $vendor eq 'Andrew Campbell' or $vendor eq 'Elizabeth Crellin' or $vendor eq 'Sophie Hodges';
+# Filter vendor_data to active vendors only
+for my $vendor (sort keys %vendor_data) {
+    next if exists $exclude_vendor{$vendor};
+    next unless exists $hash->{$vendor};
+    for my $asset (sort keys %{ $vendor_data{$vendor} }) {
+        for my $project_record (@{ $vendor_data{$vendor}{$asset} }) {
 
-    my $lookup_value = $hash->{$vendor};
+            # create filtered vendor structure
+            push @{ $vendor_data_filtered{$vendor}{$asset} }, $project_record;
+            my $project = $project_record->{project};
 
-    if (exists $data{$vendor}) {
-        for my $asset (sort keys %{ $data{$vendor} }) {
-            for my $project_record (@{ $data{$vendor}{$asset} }) {
+            # create project as outer key
+            push @{ $project_data{$project} }, {
+                vendor => $vendor,
+                asset  => $asset,
+            };
 
-                print $merge_out join("\t",
-                    $vendor,
-                    $lookup_value,
-                    $asset,
-                    $project_record->{project}
-                ), "\n";
-            }
+            # create asset as outer key
+            push @{ $asset_data{$asset} }, {
+                vendor  => $vendor,
+                project => $project,
+            };
         }
     }
 }
-exit;
+
+# print Dumper (\%project_data);
+# print Dumper (\%asset_data);
+
+open (my $vendor_out,  '>', "vendor_output_$file_date.txt") or die $!;
+open (my $project_out, '>', "project_output_$file_date.txt") or die $!;
+open (my $asset_out,   '>', "asset_output_$file_date.txt") or die $!;
+
+print_vendor_first(\%vendor_data_filtered, $vendor_out);
+print_project_first(\%project_data, $project_out);
+print_asset_first(\%asset_data, $asset_out);
+
+close $vendor_out;
+close $project_out;
+close $asset_out;
