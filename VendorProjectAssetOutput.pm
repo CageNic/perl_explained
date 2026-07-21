@@ -13,12 +13,12 @@ our @EXPORT_OK = qw(
 );
 
 sub print_record {
-    my ($fh, $vendor, $project, $asset) = @_;
+    my ($fh, $col1, $col2, $col3) = @_;
 
     print $fh join("\t",
-        $vendor,
-        $project,
-        $asset
+        $col1,
+        $col2,
+        $col3
     ), "\n";
 }
 
@@ -51,8 +51,8 @@ sub print_project_first {
 
             print_record(
                 $fh,
-                $record->{vendor},
                 $project,
+                $record->{vendor},
                 $record->{asset}
             );
 
@@ -69,9 +69,9 @@ sub print_asset_first {
 
             print_record(
                 $fh,
+                $asset,
                 $record->{vendor},
-                $record->{project},
-                $asset
+                $record->{project}
             );
 
         }
