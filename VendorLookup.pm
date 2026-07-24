@@ -17,6 +17,7 @@ my $header_row = <$in>;
 
 while (my $line = <$in>) {
     chomp $line;
+    $line =~ s/\r$//;
 
     my ($key, $value) = split (/\t/, $line);
 
