@@ -176,7 +176,7 @@ my $hash_asset  = read_asset_file("asset status.txt");
 # check that only active assets and vendors are included for new data structures
 print Dumper ($hash_asset);
 print "\n";
-# print Dumper ($hash_vendor);
+print Dumper ($hash_vendor);
 
 # create the data team structure so can be filtered out
 my %exclude_vendor = map { $_ => 1 } (
