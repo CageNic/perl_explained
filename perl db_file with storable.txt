@@ -1,0 +1,624 @@
+
+
+# db_file module examples (Perl) to write hash to file without in-memory consumption
+
+
+# If by DB_File you mean Perl’s Berkeley DB interface, the key point is: don’t serialize the whole hash first. A Perl hash is already in memory, so to avoid additional in-memory consumption, write entries directly into the DB as you generate/read them.
+
+##########################
+# Basic DB_File examples #
+##########################
+
+#########################
+## Write one key/value ##
+#########################
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+$db{"name"} = "John";
+
+untie %db;
+
+# This creates data.db and stores:
+
+name => John
+
+##########################
+## Write several values ##
+##########################
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+$db{"name"} = "John";
+$db{"age"}  = 30;
+$db{"city"} = "London";
+
+untie %db;
+
+## Read a value
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+print $db{"name"}, "\n";
+
+untie %db;
+
+Output:
+
+John
+
+##############################
+## Write data one at a time ##
+###############################
+
+This is the simplest approach if you don't want a huge hash in memory:
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+for (1 .. 1_000_000) {
+    $db{"key$_"} = "value$_";
+}
+
+untie %db;
+
+
+# You don't need:
+my %hash... containing all 1 million records first
+# Each record is written directly to the DB.
+
+#############################
+## If your input is a file ##
+#############################
+
+For example, input.txt:
+
+apple red
+banana yellow
+grape purple
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+open my $fh, '<', 'input.txt' or die $!;
+
+while (<$fh>) {
+    chomp;
+    my ($key, $value) = split;
+
+    $db{$key} = $value;
+}
+
+close $fh;
+untie %db;
+
+# This is probably the simplest useful example for avoiding a large in-memory hash
+# read one line → write it to DB → read the next line.
+
+
+
+You said:
+#######################################################################
+#### nothing that can be more than key / value... i.e. 2 columns ? ####
+#######################################################################
+
+# If you need more than two fields per record, DB_File can still be simple
+# The trick is to store the value as a serialized string.
+
+# For example, 4 columns:
+
+John    25    London    Engineer
+
+Simple example
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+$db{"John"} = "25|London|Engineer";
+
+untie %db;
+
+##################
+## Read it back ##
+##################
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+my ($age, $city, $job) = split /\|/, $db{"John"};
+
+print "$age $city $job\n";
+
+untie %db;
+
+#################################
+## If you have lots of records ##
+#################################
+
+Input:
+
+John|25|London|Engineer
+Mary|31|Paris|Manager
+Bob|42|Berlin|Developer
+
+# You can process it one line at a time:
+
+use DB_File;
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+open my $fh, '<', 'input.txt' or die $!;
+
+while (<$fh>) {
+    chomp;
+
+    my ($name, $age, $city, $job) = split /\|/;
+
+    $db{$name} = "$age|$city|$job";
+}
+
+close $fh;
+untie %db;
+
+# So you get:
+
+DB key       DB value
+---------    --------------------
+John         25|London|Engineer
+Mary         31|Paris|Manager
+Bob          42|Berlin|Developer
+
+# Only one input line is being processed at a time, rather than creating a huge Perl hash.
+# If your fields themselves can contain |, I'd use a small serialization format instead of split, such as Storable or JSON.
+
+############################
+## examples with storable ##
+############################
+
+#########
+# Write #
+#########
+
+use DB_File;
+use Storable qw(nfreeze);
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+my @data = ("John", 25, "London", "Engineer");
+
+$db{"john123"} = nfreeze(\@data);
+
+untie %db;
+
+# The DB has:
+
+key       => serialized value
+john123   => ["John", 25, "London", "Engineer"]
+
+########
+# Read #
+########
+
+use DB_File;
+use Storable qw(thaw);
+
+tie my %db, 'DB_File', 'data.db',
+    O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+my $data = thaw($db{"john123"});
+
+print $data->[0], "\n";  # John
+print $data->[1], "\n";  # 25
+print $data->[2], "\n";  # London
+print $data->[3], "\n";  # Engineer
+
+untie %db;
+
+################################
+# Reading/writing a large file #
+################################
+
+# This is the useful part if you're trying to avoid memory usage:
+
+use DB_File;
+use Storable qw(nfreeze);
+
+tie my %db, 'DB_File', 'data.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die $!;
+
+open my $fh, '<', 'input.txt' or die $!;
+
+while (<$fh>) {
+    chomp;
+
+    my ($id, $name, $age, $city) = split /\|/;
+
+    my @data = ($name, $age, $city);
+
+    $db{$id} = nfreeze(\@data);
+}
+
+close $fh;
+untie %db;
+
+# So each record can have 3, 10, 20+ columns without needing a separate DB key for every column.
+# The important bit is:
+
+$db{$id} = nfreeze(\@data);
+
+# and later:
+
+my $data = thaw($db{$id});
+
+# This stores the whole record as the DB value while processing the input one record at a time.
+
+############################################
+#### nfreeze does what? thaw does what? ####
+############################################
+
+# Think of them as pack and unpack.
+
+#################
+#### nfreeze ####
+#################
+
+Converts a Perl data structure into a string of bytes that can be stored.
+
+my @data = ("John", 25, "London");
+
+my $stored = nfreeze(\@data);
+
+# Conceptually:
+
+Perl array
+   ↓
+nfreeze()
+   ↓
+binary data
+   ↓
+DB_File
+
+# You don't normally read $stored directly because it's serialized/binary data.
+
+##############
+#### thaw ####
+##############
+
+# Does the opposite — converts the stored bytes back into the original Perl data structure.
+
+my $data = thaw($stored);
+
+print $data->[0];  # John
+print $data->[1];  # 25
+print $data->[2];  # London
+
+# Conceptually:
+
+DB_File
+   ↓
+binary data
+   ↓
+thaw()
+   ↓
+Perl array
+
+##############
+## Together ##
+##############
+
+$db{"123"} = nfreeze(\@data);  # save
+my $data = thaw($db{"123"});   # retrieve
+
+# So:
+
+# nfreeze = Perl structure → storable bytes
+# thaw = storable bytes → Perl structure
+
+# You said:
+# using storeable - what about array of hashes
+
+# Storable can handle arrays of hashes, hashes of arrays, hashes of hashes, and combinations of them.
+
+# Array of hashes
+
+use Storable qw(nfreeze thaw);
+
+my @people = (
+    {
+        name => "John",
+        age  => 25,
+        city => "London",
+    },
+    {
+        name => "Mary",
+        age  => 31,
+        city => "Paris",
+    },
+);
+
+# You can freeze the whole array:
+
+my $stored = nfreeze(\@people);
+
+# And get it back:
+
+my $people = thaw($stored);
+
+print $people->[0]{name};  # John
+print $people->[1]{city};  # Paris
+
+######################
+#### With DB_File ####
+######################
+
+# You could store that whole array as one DB value:
+
+$db{"people"} = nfreeze(\@people);
+
+# Then:
+
+my $people = thaw($db{"people"});
+
+# But for your large-data use case...
+# If you have millions of records, you probably don't want:
+
+my @people = (... millions of hashes ...);
+
+$db{"people"} = nfreeze(\@people);
+
+# because that puts the entire array in memory.
+# Instead, store one hash per DB record:
+
+my %person = (
+    name => "John",
+    age  => 25,
+    city => "London",
+);
+
+$db{"john123"} = nfreeze(\%person);
+
+# Then each record is independent:
+
+john123 → { name => John, age => 25, city => London }
+mary456 → { name => Mary, age => 31, city => Paris }
+bob789  → { name => Bob,  age => 42, city => Berlin }
+
+# That gives you the benefits of multiple fields per record + low memory usage.
+# The useful pattern is:
+
+# DB_File key = record ID
+# DB_File value = a frozen hash containing all the fields for that record
+
+# For example, suppose your data looks like this:
+
+ID       Name    Age    City
+john123  John    25     London
+mary456  Mary    31     Paris
+bob789   Bob     42     Berlin
+
+## You can store it like this.
+## Writing the records
+
+use strict;
+use warnings;
+
+use DB_File;
+use Storable qw(nfreeze);
+
+tie my %db, 'DB_File', 'people.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die "Cannot open DB: $!";
+
+$db{"john123"} = nfreeze({
+    name => "John",
+    age  => 25,
+    city => "London",
+});
+
+$db{"mary456"} = nfreeze({
+    name => "Mary",
+    age  => 31,
+    city => "Paris",
+});
+
+$db{"bob789"} = nfreeze({
+    name => "Bob",
+    age  => 42,
+    city => "Berlin",
+});
+
+untie %db;
+
+## The important part is:
+
+$db{"john123"} = nfreeze({
+    name => "John",
+    age  => 25,
+    city => "London",
+});
+
+## The DB sees:
+
+john123  ->  frozen hash
+mary456  ->  frozen hash
+bob789   ->  frozen hash
+
+## You don't need to create a huge Perl hash containing all the people.
+## Reading one record
+use DB_File;
+use Storable qw(thaw);
+
+tie my %db, 'DB_File', 'people.db',
+    O_RDONLY, 0644, $DB_HASH
+    or die "Cannot open DB: $!";
+
+my $person = thaw($db{"john123"});
+
+print $person->{name}, "\n";
+print $person->{age},  "\n";
+print $person->{city}, "\n";
+
+untie %db;
+
+Output:
+
+John
+25
+London
+
+# $person is now an ordinary Perl hash reference:
+
+$person->{name}
+$person->{age}
+$person->{city}
+
+# Processing a large input file
+# This is where the approach becomes useful for your original low-memory requirement.
+
+# Suppose people.txt contains:
+
+john123|John|25|London
+mary456|Mary|31|Paris
+bob789|Bob|42|Berlin
+
+# You can do:
+
+use strict;
+use warnings;
+
+use DB_File;
+use Storable qw(nfreeze);
+
+tie my %db, 'DB_File', 'people.db',
+    O_CREAT | O_RDWR, 0644, $DB_HASH
+    or die "Cannot open DB: $!";
+
+open my $fh, '<', 'people.txt'
+    or die "Cannot open input: $!";
+
+while (<$fh>) {
+    chomp;
+
+    my ($id, $name, $age, $city) = split /\|/;
+
+    $db{$id} = nfreeze({
+        name => $name,
+        age  => $age,
+        city => $city,
+    });
+}
+
+close $fh;
+untie %db;
+
+# Notice that there is no:
+
+my %people and no my @people;
+
+# You're effectively doing:
+
+read one line
+     ↓
+create one hash
+     ↓
+nfreeze it
+     ↓
+write to DB_File
+     ↓
+move to next line
+
+# So even if the input has 10 million records, you're not creating a 10-million-element Perl data structure.
+
+# You can also update individual fields
+# There is one important catch.
+
+# You can't directly do:
+
+$db{"john123"}->{age} = 26;   # DOES NOT WORK
+
+# because $db{"john123"} is just frozen bytes.
+
+# Instead:
+
+my $person = thaw($db{"john123"});
+
+$person->{age} = 26;
+
+$db{"john123"} = nfreeze($person);
+
+# So the complete update is:
+
+my $person = thaw($db{"john123"});
+
+$person->{age} = 26;
+$person->{city} = "Manchester";
+
+$db{"john123"} = nfreeze($person);
+
+# The mental model
+# Think of each DB record as:
+
+             DB_File
+        ┌─────────────────┐
+john123 │ frozen hash     │
+        ├─────────────────┤
+mary456 │ frozen hash     │
+        ├─────────────────┤
+bob789  │ frozen hash     │
+        └─────────────────┘
+
+# When you want john123:
+
+DB_File
+   │
+   ▼
+frozen bytes
+   │
+ thaw()
+   │
+   ▼
+{name => "John", age => 25, city => "London"}
+
+# And when you save it:
+
+Perl hash
+   │
+   ▼
+nfreeze()
+   │
+   ▼
+frozen bytes
+   │
+   ▼
+DB_File
+
+# This is a very handy pattern when you have lots of records, each with several fields, and you want to retrieve records by a unique ID without keeping the whole dataset in memory.
