@@ -1,0 +1,68 @@
+In Perl, without a date module to treat values as date classes, can you operate on dates to e.g. use them to filter on earlier / later than a specific date?
+
+ChatGPT said:
+Yes. You can compare dates in Perl without a date module, but it depends on how the dates are represented.
+
+The easiest case: YYYY-MM-DD
+If your dates look like this:
+
+my $date1 = "2026-09-05";
+my $date2 = "2026-09-10";
+
+you can actually compare them directly:
+
+if ($date1 lt $date2) {
+    print "date1 is earlier";
+}
+
+Result:
+
+date1 is earlier
+
+Why does this work?
+
+Because YYYY-MM-DD is arranged from largest unit to smallest:
+
+YEAR - MONTH - DAY
+2026 - 09    - 05
+2026 - 09    - 10
+
+So alphabetical/string comparison gives you the correct chronological order.
+
+Filtering becomes very easy
+For example:
+
+my $cutoff = "2026-09-01";
+
+for my $date (@dates) {
+    if ($date lt $cutoff) {
+        print "$date is earlier than cutoff\n";
+    }
+}
+
+Or later than:
+
+if ($date gt $cutoff) {
+    print "$date is later than cutoff\n";
+}
+
+Or within a range:
+
+if ($date ge "2026-09-01" && $date le "2026-09-30") {
+    print "date is in September";
+}
+
+Notice that for strings, you use:
+
+lt   less than
+gt   greater than
+le   less than or equal
+ge   greater than or equal
+eq   equal
+ne   not equal
+
+rather than:
+
+<  >  <=  >=  ==  !=
+
+only year-month-day works... anything else needs a module
