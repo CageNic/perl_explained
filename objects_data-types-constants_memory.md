@@ -11,50 +11,52 @@ use Moo;
 use strict;
 use warnings;
 
-# Define a read-only attribute (acts like a constant)
-has 'PI' => (
-    is => 'ro',          # read-only
-    default => sub { 3.14159 },
-);
+# Define a read-only attribute (acts like a constant) 
+has 'PI' => (  
+    is => 'ro',          # read-only  
+    default => sub { 3.14159 },  
+);  
 
-1; # every package must return true
-Notes:
-•	has defines an attribute.
-•	is => 'ro' makes it read-only, so code outside cannot modify it.
-•	default => sub { ... } sets its initial value.
+1;  # every package must return true  
+
+Notes:  
+•	has defines an attribute  
+•	is => 'ro' makes it read-only, so code outside cannot modify it  
+•	default => sub { ... } sets its initial value  
 ________________________________________
-2️⃣ Use the package in a main script
-# File: main.pl
-use strict;
-use warnings;
-use MyConstants;
+2️⃣ Use the package in a main script 
+# File: main.pl 
+use strict;  
+use warnings;   
+use MyConstants;   
 
-my $constants = MyConstants->new();
+my $constants = MyConstants->new(); 
 
-print "The value of PI is: ", $constants->PI, "\n";
-Output:
-The value of PI is: 3.14159
-•	You create an object of your Moo class.
-•	Access the constant via the read-only attribute.
+print "The value of PI is: ", $constants->PI, "\n";  
+Output:  
+The value of PI is: 3.14159   
+•	You create an object of your Moo class   
+•	Access the constant via the read-only attribute   
 ________________________________________
-3️⃣ Alternative: use constant pragma for “true” constants”
-If you just want a global constant without creating an object:
-# File: MyConstants.pm
-package MyConstants;
+3️⃣ Alternative: use constant pragma for “true” constants”  
+If you just want a global constant without creating an object:  
+# File: MyConstants.pm  
+package MyConstants;  
 
-use strict;
-use warnings;
-use constant PI => 3.14159;
+use strict;  
+use warnings;  
+use constant PI => 3.14159;  
 
-1;
-Then in your main script:
-use strict;
-use warnings;
-use MyConstants;
+1;  
+Then in your main script:  
+use strict;  
+use warnings;  
+use MyConstants;  
 
-print "The value of PI is: ", MyConstants::PI, "\n";
-•	use constant defines a compile-time constant, no object needed.
-•	This is simpler if you don’t need Moo’s OO features.
+print "The value of PI is: ", MyConstants::PI, "\n";  
+
+•	use constant defines a compile-time constant, no object needed  
+•	This is simpler if you don’t need Moo’s OO features  
 ________________________________________
 ✅ Summary
 •	Moo approach: has 'attr' => (is=>'ro', default=>sub{...}) → object-based, read-only attribute.
