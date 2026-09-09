@@ -1,3 +1,7 @@
+####################################
+# get the image of a youtube video #
+####################################
+
 #!/usr/bin/env perl
 
 use strict;
