@@ -1,6 +1,5 @@
 In Perl, without a date module to treat values as date classes, can you operate on dates to e.g. use them to filter on earlier / later than a specific date?
 
-ChatGPT said:
 Yes. You can compare dates in Perl without a date module, but it depends on how the dates are represented.
 
 The easiest case: YYYY-MM-DD
@@ -65,4 +64,4 @@ rather than:
 
 <  >  <=  >=  ==  !=
 
-only year-month-day works... anything else needs a module
+only year-month-day works... you could change dates to this format if they are not as per this format, e.g. day-month-year
