@@ -1,3 +1,7 @@
+# not using this code in this script, but wanting both undefined and empty value (not false as that inlcudes 0) to be NA
+
+# $value = 'NA' if !defined($value) || $value eq '';
+
 #!/usr/bin/perl
 use strict;
 use warnings;
