@@ -1,4 +1,4 @@
-ChatGPT said:
+
 
 File::Spec is a core Perl module that helps you construct and manipulate file and directory paths without hardcoding the path separator.
 
@@ -6,7 +6,7 @@ It's particularly useful when writing scripts that need to work on Linux, macOS,
 
 Let's look at some basic examples, using your Thompson music files as the context.
 1. Loading the module
-perl
+
 
 use File::Spec;
 
@@ -14,7 +14,6 @@ You don't normally need to install it separately because File::Spec is included 
 2. catfile() — Construct a file path
 
 This is probably the most useful method for your script.
-perl
 
 use File::Spec;
 
@@ -25,24 +24,17 @@ my $path = File::Spec->catfile($dir, $file);
 
 print "$path\n";
 
-Output on Linux:
-text
-
 /home/music/Thompson/1 Thompson title.aac
 
-On Windows, the resulting path would use the appropriate Windows path separators.
-
-Why use catfile() instead of concatenating strings?
-
-You could write:
-perl
+##-----------------------------------------------------##
+## Why use catfile() instead of concatenating strings? ##
+##-----------------------------------------------------##
 
 my $path = "$dir/$file";
 
 But that assumes / is the path separator you want. catfile() constructs the path using the conventions of the current operating system.
 
 For your renaming script, this is exactly what we need:
-perl
 
 my $source = File::Spec->catfile($dir, $file);
 my $target = File::Spec->catfile($dir, $newfile);
@@ -51,7 +43,6 @@ These construct the full source and destination paths.
 3. catdir() — Construct a directory path
 
 Use catdir() when constructing a directory path rather than a file path.
-perl
 
 use File::Spec;
 
@@ -63,13 +54,9 @@ my $dir = File::Spec->catdir($base, $user, $album);
 
 print "$dir\n";
 
-Output on Linux:
-text
-
 /home/music/Thompson
 
 You can supply as many directory components as you need:
-perl
 
 my $dir = File::Spec->catdir(
     '/home',
@@ -82,7 +69,6 @@ This is useful when building directory names dynamically.
 4. splitpath() — Separate a path into components
 
 Suppose you have a complete filename:
-perl
 
 my $path = '/home/music/Thompson/1 Thompson title.aac';
 
@@ -92,9 +78,6 @@ my ($volume, $directories, $file) =
 print "Volume:      $volume\n";
 print "Directories: $directories\n";
 print "Filename:    $file\n";
-
-On a typical Linux system, the output is:
-text
 
 Volume:
 Directories: /home/music/Thompson/
@@ -110,17 +93,12 @@ This is useful when you have a complete path but need to extract its components.
 5. splitdir() — Split a directory path
 
 You can split a directory path into its individual components.
-perl
 
 my $dir = '/home/music/Thompson';
-
 my @parts = File::Spec->splitdir($dir);
-
 print "$_\n" for @parts;
 
 On Unix-like systems, the output is approximately:
-text
-
 
 home
 music
@@ -132,21 +110,16 @@ This method is useful when you need to examine the directory hierarchy.
 6. curdir() and updir() — Current and parent directories
 
 These methods return the operating system's conventional representations of the current and parent directories.
-perl
 
 use File::Spec;
 
 print "Current: ", File::Spec->curdir(), "\n";
 print "Parent:  ", File::Spec->updir(), "\n";
 
-Typical Unix output:
-text
-
 Current: .
 Parent:  ..
 
-You can use them when constructing relative paths:
-perl
+You can use them when constructing relative paths
 
 my $parent = File::Spec->catdir(
     File::Spec->curdir(),
@@ -159,26 +132,21 @@ This constructs a path referring to the parent of the current directory.
 7. rel2abs() — Convert a relative path to an absolute path
 
 Suppose your script receives a directory name such as:
-perl
 
 my $dir = 'music/Thompson';
 
-You can convert it into an absolute path:
-perl
+You can convert it into an absolute paths
 
 use File::Spec;
 
 my $absolute = File::Spec->rel2abs($dir);
-
 print "$absolute\n";
 
 If your current directory is /home/user, the result would be:
-text
 
 /home/user/music/Thompson
 
 You can also provide a base directory:
-perl
 
 my $absolute = File::Spec->rel2abs(
     'Thompson',
@@ -186,7 +154,6 @@ my $absolute = File::Spec->rel2abs(
 );
 
 Result:
-text
 
 /home/user/music/Thompson
 
@@ -194,7 +161,6 @@ This is helpful when your script accepts a relative directory argument but you w
 8. abs2rel() — Convert an absolute path to a relative path
 
 The reverse operation is also available.
-perl
 
 my $relative = File::Spec->abs2rel(
     '/home/user/music/Thompson/01 Thompson title.aac',
@@ -204,7 +170,6 @@ my $relative = File::Spec->abs2rel(
 print "$relative\n";
 
 Output:
-text
 
 Thompson/01 Thompson title.aac
 
@@ -212,7 +177,6 @@ This is handy when you want to display shorter paths to the user.
 9. file_name_is_absolute() — Check whether a path is absolute
 
 You can test whether a path is absolute:
-perl
 
 use File::Spec;
 
@@ -231,7 +195,6 @@ This can be useful when validating command-line arguments.
 10. Putting it together with your music files
 
 Here's a small example showing how File::Spec works with opendir() and readdir().
-perl
 
 #!/usr/bin/env perl
 
@@ -260,13 +223,8 @@ while (my $file = readdir($dh)) {
 
 closedir($dh);
 
-Run it with:
-bash
-
-perl list_files.pl "/home/music/Thompson"
 
 For each entry, the script constructs the full path and checks whether it is a regular file.
-
 Notice the distinction:
 
     readdir() returns the filename, not the full path.
@@ -296,17 +254,14 @@ For everyday Perl scripting, start with these three:
     rel2abs() — Convert a relative path to an absolute one.
 
 Those three cover a large proportion of everyday directory and file manipulation tasks.
-You said:
 
-is this module different to path;;tiny
-ChatGPT said:
+#### is this module different to path::tiny ####
 
 Yes. File::Spec and Path::Tiny solve many of the same problems, but Path::Tiny provides a more modern, convenient interface for working with files and directories.
 
 The main difference is that File::Spec concentrates on constructing and analysing path strings, whereas Path::Tiny provides path objects with methods for constructing paths, reading and writing files, copying files, and traversing directories.
 1. The basic difference
 File::Spec — part of core Perl
-perl
 
 use File::Spec;
 
@@ -320,7 +275,6 @@ print "$path\n";
 $path is a string containing the constructed path.
 
 If you want to copy a file, you would typically combine File::Spec with another module, such as File::Copy:
-perl
 
 use File::Spec;
 use File::Copy qw(copy);
@@ -331,7 +285,6 @@ my $target = File::Spec->catfile($dir, '01 Thompson title.aac');
 copy($source, $target) or die "Copy failed: $!";
 
 Path::Tiny — a CPAN module
-perl
 
 use Path::Tiny;
 
@@ -345,7 +298,6 @@ Here, $dir and $file are Path::Tiny objects rather than ordinary strings.
 You can use methods on those objects to perform common filesystem operations.
 
 For example, copying a file:
-perl
 
 use Path::Tiny;
 
