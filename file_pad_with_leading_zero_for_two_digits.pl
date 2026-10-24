@@ -1,17 +1,17 @@
-Here is a Perl script that opens a directory, uses readdir to read its contents, and copies each .aac file to a new filename with a leading zero for single-digit track numbers. The original files remain untouched.
+# Perl script that opens a directory, uses readdir to read its contents, and copies each .aac file to a new filename with a leading zero for single-digit track numbers
+# The original files remain untouched
+# remove the originals if the copy
 
-For example:
+# For example:
+#
+#    1 Thompson title.aac → creates 01 Thompson title.aac
+#    2 Thompson title.aac → creates 02 Thompson title.aac
+#    9 Thompson title.aac → creates 09 Thompson title.aac
+#    10 Thompson title.aac → unchanged; no copy needed.
 
-    1 Thompson title.aac → creates 01 Thompson title.aac
-    2 Thompson title.aac → creates 02 Thompson title.aac
-    9 Thompson title.aac → creates 09 Thompson title.aac
-    10 Thompson title.aac → unchanged; no copy needed.
-
-Perl script to copy and zero-pad track numbers
-perl
+# Perl script to copy and zero-pad track numbers
 
 #!/usr/bin/env perl
-
 use strict;
 use warnings;
 use File::Spec;
@@ -62,36 +62,21 @@ closedir($dh);
 
 print "Finished.\n";
 
-How to run it
+# Example output
 
-    Save the script as pad_tracks.pl.
-    Open a terminal.
-    Run it against your music directory:
+# COPIED: 1 Thompson title.aac -> 01 Thompson title.aac
+# COPIED: 2 Thompson title.aac -> 02 Thompson title.aac
+# COPIED: 3 Thompson title.aac -> 03 Thompson title.aac
+# SKIP: 09 Thompson title.aac already exists
+# Finished
 
-bash
+# Originals are preserved: The script uses copy(), not rename().
+# Existing files are protected: It skips a copy if the destination already exists.
+# Only .aac files are processed: The extension match is case-insensitive.
+# Other filenames are ignored: Files that don't begin with a number followed by a space are skipped.
+# The directory is configurable: Supply the directory path as the first command-line argument.
 
-perl pad_tracks.pl "/path/to/your/music"
+# readdir doesn't guarantee the order in which files are processed
+# That doesn't affect the results because the script constructs each destination filename independently
 
-Alternatively, omit the directory argument to process the current directory:
-bash
 
-perl pad_tracks.pl
-
-Example output
-text
-
-COPIED: 1 Thompson title.aac -> 01 Thompson title.aac
-COPIED: 2 Thompson title.aac -> 02 Thompson title.aac
-COPIED: 3 Thompson title.aac -> 03 Thompson title.aac
-SKIP: 09 Thompson title.aac already exists
-Finished.
-
-Important details
-
-    Originals are preserved: The script uses copy(), not rename().
-    Existing files are protected: It skips a copy if the destination already exists.
-    Only .aac files are processed: The extension match is case-insensitive.
-    Other filenames are ignored: Files that don't begin with a number followed by a space are skipped.
-    The directory is configurable: Supply the directory path as the first command-line argument.
-
-One subtle point: readdir doesn't guarantee the order in which files are processed. That doesn't affect the results because the script constructs each destination filename independently.
