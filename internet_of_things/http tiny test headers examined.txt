@@ -1,0 +1,31 @@
+###################################
+# http tiny test headers examined #
+###################################
+
+#------------------#
+# test full header #
+#------------------#
+
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use HTTP::Tiny;
+use Data::Dumper;
+
+my $http = HTTP::Tiny->new(verify_SSL => 0);
+my $res = $http->head(https://ws.audioscrobbler.com);
+
+if ($res->{success}) {
+    print Dumper ($res->{headers}), "\n";
+}
+
+else {
+    print "Failed: $res->{status} $res->{reason}\n";
+}
+
+#-----------------------#
+# test specific headers #
+#-----------------------#
+
+print $res->{headers}->{'content-type'};
